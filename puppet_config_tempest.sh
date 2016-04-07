@@ -41,4 +41,22 @@ tempest::identity_uri_v3: ${OS_AUTH_URL%/*}/v3
 tempest::public_network_name: nova
 EOF
 
-puppet apply $PUPPET_ARGS --modulepath=/etc/puppet/modules --hiera_config=/tmp/hieradata/hiera.yaml -e "include ::tempest" | tee puppet_tempest.log
+#puppet apply $PUPPET_ARGS --modulepath=/etc/puppet/modules --hiera_config=/tmp/hieradata/hiera.yaml -e "include ::tempest" | tee puppet_tempest.log
+#CONTROLLER=$(grep -Eo "/[0-9\.]+" ${HOME}/overcloudrc | tr -d "/")
+#mkdir -p ${HOME}/contr_hiera/
+#ssh -tt heat-admin@${CONTROLLER} "sudo chown heat-admin -R /etc/puppet"
+#scp -r heat-admin@${CONTROLLER}:/etc/puppet/hieradata contr_hiera/
+#scp -r heat-admin@${CONTROLLER}:/etc/puppet/hiera.yaml contr_hiera/
+#sed -i "s%/etc/puppet/hieradata%${HOME}/contr_hiera/hieradata%g" contr_hiera/hiera.yaml
+
+custom_provision_module_path=/home/stack/testt
+CONTROLLER=$(grep -Eo "/[0-9\.]+" /home/stack/overcloudrc | tr -d "/")
+SSHOPS="-t -t -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /home/stack/.ssh/id_rsa"
+SCPOPS="-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -i /home/stack/.ssh/id_rsa"
+
+scp -r $SCPOPS $custom_provision_module_path heat-admin@${CONTROLLER}:~/
+ssh $SSHOPS << EOF
+sudo mv ~/testt /etc/puppet/modules/
+sudo puppet apply --verbose --debug --detailed-exitcodes -e "include ::testt" | tee ~/puppet_run.log
+EOF
+scp $SCPOPS -r heat-admin@$CONTROLLER:/tmp/openstack /tmp/

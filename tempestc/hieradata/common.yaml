@@ -1,0 +1,7 @@
+---
+tempestc::config::ssl: false
+tempestc::config::ipv6: false
+tempestc::config::os_username: admin
+tempestc::config::os_password: fE69CWdwpvptwaVrJVAyGYtBq
+tempestc::config::os_tenant_name: admin
+tempestc::config::os_keystone_url: http://192.0.2.6

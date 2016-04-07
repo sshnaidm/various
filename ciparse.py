@@ -6,6 +6,10 @@ import sys
 from lxml import etree
 
 timeout_re = re.compile('Killed\s+timeout -s 9 ')
+LOGS_DIR = os.path.join(os.environ["HOME"], "tmp", "ci_status")
+MAIN_PAGE = "http://tripleo.org/cistatus-periodic.html"
+# MAIN_PAGE = "http://tripleo.org/cistatus.html"
+
 
 PATTERNS = [
     {
@@ -150,18 +154,19 @@ def analyze(j, logpath):
     if not msg:
         msg = "Reason was NOT FOUND. Please investigate"
         delim = "XX"
-    all_msg = "{date}: {job_type} {delim} {msg} {delim} log: {log_url}"
+    all_msg = "{date}:\t{job_type:38}\t{delim}\t{msg:50}\t{delim}\tlog: {log_url}"
     print all_msg.format(msg=msg, delim=delim, **j)
 
 
 def main():
-    short_name = sys.argv[1] if len(sys.argv) > 1 else "nonha"
+    LIMIT_JOBS = 7
+    INTERESTED_JOB_TYPE = None #  or None for all
+    short_name = sys.argv[1] if len(sys.argv) > 1 else INTERESTED_JOB_TYPE
 
-    logdir = os.path.join(os.environ["HOME"], "tmp", "ci_status")
-    jobs = parse_page("http://tripleo.org/cistatus-periodic.html")
-    jobs = [job for job in jobs if download(job, path=logdir)]
-    for job in limit_jobs(jobs, short=short_name, number=20):
-        analyze(job, logdir)
+    jobs = parse_page(MAIN_PAGE)
+    jobs = [job for job in jobs if download(job, path=LOGS_DIR)]
+    for job in limit_jobs(jobs, short=short_name, number=LIMIT_JOBS):
+        analyze(job, LOGS_DIR)
 
 
 if __name__ == '__main__':

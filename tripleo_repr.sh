@@ -2,7 +2,7 @@
 
 
 #    set environment on fedora(?) machine
-#    read about it in tripleo-ci/docs/TripleO-ci.rst
+#    read abtest-environments/net-iso.yamlout it in tripleo-ci/docs/TripleO-ci.rst
 #
 #    In toci_gate_test.sh script:
 #
@@ -58,27 +58,32 @@ function register_job_type() {
     case $job_type in
         nonha)
             global_export "export INTROSPECT=1"
+            global_export 'export NODECOUNT=3'
+            global_export 'export OVERCLOUD_DEPLOY_ARGS="$OVERCLOUD_DEPLOY_ARGS -e $TRIPLEO_ROOT/tripleo-ci/test-environments/enable-tls.yaml -e $TRIPLEO_ROOT/tripleo-ci/test-environments/inject-trust-anchor.yaml --ceph-storage-scale 1 -e /usr/share/openstack-tripleo-heat-templates/environments/puppet-ceph-devel.yaml"'
             ;;
         ha)
             global_export "export NETISO_V4=1"
             global_export "export NODECOUNT=4"
             global_export "export PACEMAKER=1"
-            global_export 'export OVERCLOUD_DEPLOY_ARGS="$OVERCLOUD_DEPLOY_ARGS --control-scale 3 --ntp-server 0.centos.pool.ntp.org -e /usr/share/openstack-tripleo-heat-templates/environments/puppet-pacemaker.yaml"'
+            global_export 'export OVERCLOUD_DEPLOY_ARGS="$OVERCLOUD_DEPLOY_ARGS --control-scale 3 --ntp-server 0.centos.pool.ntp.org -e /usr/share/openstack-tripleo-heat-templates/environments/puppet-pacemaker.yaml -e /usr/share/openstack-tripleo-heat-templates/environments/network-isolation.yaml -e /usr/share/openstack-tripleo-heat-templates/environments/net-multiple-nics.yaml -e $TRIPLEO_ROOT/tripleo-ci/test-environments/net-iso.yaml"'
             ;;
         containers)
             global_export 'export TRIPLEO_SH_ARGS="--use-containers"'
             ;;
         periodic)
-            global_export 'export DELOREAN_REPO_URL=http://trunk.rdoproject.org/centos7/current'
+            global_export 'export DELOREAN_REPO_URL=http://trunk.rdoproject.org/centos7/consistent'
+            global_export 'export CACHEUPLOAD=1'
             ;;
-        liberty)
+        liberty|mitaka)
             # This is handled in tripleo.sh (it always uses centos7-liberty/current)
             global_export 'unset DELOREAN_REPO_URL'
             ;;
-        ceph)
-            global_export 'export NETISO_V4=1'
-            global_export 'export NODECOUNT=4'
-            global_export 'export OVERCLOUD_DEPLOY_ARGS="$OVERCLOUD_DEPLOY_ARGS --ceph-storage-scale 2 -e /usr/share/openstack-tripleo-heat-templates/environments/puppet-ceph-devel.yaml"'
+        upgrades)
+            global_export 'export NETISO_V6=1'
+            global_export 'export NODECOUNT=3'
+            global_export "export PACEMAKER=1"
+            global_export 'export OVERCLOUD_DEPLOY_ARGS="$OVERCLOUD_DEPLOY_ARGS -e /usr/share/openstack-tripleo-heat-templates/environments/puppet-pacemaker.yaml --ceph-storage-scale 1 -e /usr/share/openstack-tripleo-heat-templates/environments/network-isolation-v6.yaml -e /usr/share/openstack-tripleo-heat-templates/environments/net-multiple-nics-v6.yaml -e $TRIPLEO_ROOT/tripleo-ci/test-environments/net-iso.yaml"'
+            global_export 'export OVERCLOUD_UPDATE_ARGS="-e /usr/share/openstack-tripleo-heat-templates/overcloud-resource-registry-puppet.yaml $OVERCLOUD_DEPLOY_ARGS"'
             ;;
         *)
             echo "Unknown job type:" $job_type
@@ -221,19 +226,6 @@ function clean(){
 
 }
 
-function set_nested_support() {
-
-    for vm in $(virsh list --all --name | grep baremetal)
-    do
-      virsh dumpxml $vm > /tmp/$vm
-      if [[ ! $(grep vmx /tmp/$vm) ]]
-      then
-         sed -i "s%<features%<cpu mode='host-passthrough'/><features%" /tmp/$vm
-         virsh define /tmp/$vm
-      fi
-    done
-}
-
 #############################################################################
 echo "Starting ..............................."
 rm -f ~/envariables
@@ -255,6 +247,9 @@ else
     export JOB_TYPE=${1:-nonha}
     export PERIODICAL=true
     global_export 'export PERIODICAL=true'
+    global_export 'export DELOREAN_REPO_URL=http://trunk.rdoproject.org/centos7/consistent'
+    global_export 'export CACHEUPLOAD=1'
+
 fi
 
 export TRIPLEO_ROOT=/home/stack/tripleo
@@ -270,18 +265,18 @@ global_export 'export OVERCLOUD_DEPLOY_ARGS="--libvirt-type=qemu"'
 global_export 'export TRIPLEO_SH_ARGS='
 global_export 'export NETISO_V4=0'
 
-JOB_TYPE=${JOB_TYPE:-"$(echo $LOGDIR | grep -Po "gate-tripleo-ci[^/]*" | cut -d"-" -f5)"}
+JOB_TYPE=${JOB_TYPE:-"$(echo $LOGDIR | grep -Po "\-tripleo-ci[^/]*" | cut -d"-" -f5)"}
 echo "Job type = $JOB_TYPE"
 register_job_type $JOB_TYPE
 
-if [[ "$JOB_TYPE" != "ha" && "$JOB_TYPE" != "ceph" ]]; then
-    export NODE_COUNT=2
+if [[ "$JOB_TYPE" != "ha" ]]; then
+    export NODE_COUNT=3
     export NODE_CPU=4
-    export NODE_MEM=16384
+    export NODE_MEM=12288
     export UNDERCLOUD_NODE_CPU=4
     export UNDERCLOUD_NODE_MEM=16384
     global_export "export NODE_CPU=4"
-    global_export "export NODE_MEM=16384"
+    global_export "export NODE_MEM=12288"
     global_export "export UNDERCLOUD_NODE_CPU=4"
     global_export "export UNDERCLOUD_NODE_MEM=16384"
 else
@@ -364,25 +359,66 @@ parameter_defaults:
 EOENV
 
 # Install our test cert so SSL tests work
-cp /tmp/tripleo-ci/test-environments/overcloud-cacert.pem /etc/pki/ca-trust/source/anchors/
+cp \$TRIPLEO_ROOT/tripleo-ci/test-environments/overcloud-cacert.pem /etc/pki/ca-trust/source/anchors/
 update-ca-trust extract
 
 export OVERCLOUD_DEPLOY_ARGS="\$OVERCLOUD_DEPLOY_ARGS -e /tmp/deploy_env.yaml"
 
 bash \$TRIPLEO_ROOT/tripleo-ci/scripts/tripleo.sh --undercloud
+
+##### Set up networks
+#
+#if [ \$NETISO_V4 -eq 1 ] || [ \$NETISO_V6 -eq 1 ]; then
+#
+#    # Update our floating range to use a 10. /24
+#    export FLOATING_IP_CIDR=\${FLOATING_IP_CIDR:-"10.0.0.0/24"}
+#    export FLOATING_IP_START=\${FLOATING_IP_START:-"10.0.0.100"}
+#    export FLOATING_IP_END=\${FLOATING_IP_END:-"10.0.0.200"}
+#    export EXTERNAL_NETWORK_GATEWAY=\${EXTERNAL_NETWORK_GATEWAY:-"10.0.0.1"}
+#
+## Make our undercloud act as the external gateway
+## eth6 should line up with the "external" network port per the
+## tripleo-heat-template/network/config/multiple-nics templates.
+## NOTE: seed uses eth0 for the local network.
+#    cat >> /tmp/eth6.cfg <<EOF_CAT
+#network_config:
+#    - type: interface
+#      name: eth6
+#      use_dhcp: false
+#      addresses:
+#        - ip_netmask: 10.0.0.1/24
+#EOF_CAT
+#    if [ \$NETISO_V6 -eq 1 ]; then
+#        cat >> /tmp/eth6.cfg <<EOF_CAT
+#        - ip_netmask: 2001:db8:fd00:1000::1/64
+#EOF_CAT
+#    fi
+#    sudo os-net-config -c /tmp/eth6.cfg -v
+#fi
+
+######### Continue with scripts
+
 bash \$TRIPLEO_ROOT/tripleo-ci/scripts/tripleo.sh --overcloud-images
 bash \$TRIPLEO_ROOT/tripleo-ci/scripts/tripleo.sh --register-nodes
 bash \$TRIPLEO_ROOT/tripleo-ci/scripts/tripleo.sh --introspect-nodes
+
+
 if [[ \$NODE_MEM == '4096' ]]; then
     echo "Recreate the baremetal flavor to add a swap partition"
     source stackrc
     nova flavor-delete baremetal
     nova flavor-create --swap 1024 baremetal auto 4096 39 1
     nova flavor-key baremetal set capabilities:boot_option=local
-    export OVERCLOUD_DEPLOY_ARGS="\$OVERCLOUD_DEPLOY_ARGS -e /tmp/tripleo-ci/test-environments/swap-partition.yaml"
+    export OVERCLOUD_DEPLOY_ARGS="\$OVERCLOUD_DEPLOY_ARGS -e \$TRIPLEO_ROOT/tripleo-ci/test-environments/swap-partition.yaml"
 fi
 echo "Overcloud deploy args: \$OVERCLOUD_DEPLOY_ARGS"
 bash \$TRIPLEO_ROOT/tripleo-ci/scripts/tripleo.sh --overcloud-deploy
+
+if [ -n "\${OVERCLOUD_UPDATE_ARGS:-}" ] ; then
+    export OVERCLOUD_UPDATE_ARGS="\$OVERCLOUD_UPDATE_ARGS -e \$TRIPLEO_ROOT/tripleo-ci/test-environments/worker-config.yaml"
+    bash \$TRIPLEO_ROOT/tripleo-ci/scripts/tripleo.sh --overcloud-update \${TRIPLEO_SH_ARGS:-}
+fi
+
 
 OVERCLOUD_PINGTEST_OLD_HEATCLIENT=0 bash \$TRIPLEO_ROOT/tripleo-ci/scripts/tripleo.sh --overcloud-pingtest
 xxEOFxx
@@ -396,7 +432,3 @@ rsync -zavr -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 rsync -zavr -e "ssh -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" ~/tripleo stack@$SEED_IP:~/
 ssh -t -t -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no stack@$SEED_IP "sudo yum install -y screen"
 ssh -t -t -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no stack@$SEED_IP "TERM=screen screen -mL bash -c 'bash ~/script_2run.sh 2>&1 | tee local.log'"
-# Use this for nested in overcloud ping test
-# https://review.openstack.org/#/c/273364/
-#set_nested_support
-#echo "Restart virtual machines and rerun overcloud pingtest"

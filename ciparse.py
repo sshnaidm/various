@@ -208,7 +208,9 @@ def analyze(j, logpath):
 
 
 def main():
+    # How many jobs to print
     LIMIT_JOBS = 20
+    # Which kind of jobs to take? ha, nonha, upgrades, None - for all
     INTERESTED_JOB_TYPE = "upgrades" #  or None for all (ha, nonha, upgrades, etc)
     short_name = sys.argv[1] if len(sys.argv) > 1 else INTERESTED_JOB_TYPE
 

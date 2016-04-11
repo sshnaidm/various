@@ -1,4 +1,5 @@
 import fileinput
+import gzip
 import os
 import re
 import requests
@@ -6,51 +7,57 @@ import sys
 from lxml import etree
 
 timeout_re = re.compile('Killed\s+timeout -s 9 ')
+puppet_re = re.compile('"deploy_stderr": ".+?1;31mError: .+?\W(\w+)::')
+
 LOGS_DIR = os.path.join(os.environ["HOME"], "tmp", "ci_status")
-MAIN_PAGE = "http://tripleo.org/cistatus-periodic.html"
-# MAIN_PAGE = "http://tripleo.org/cistatus.html"
+#MAIN_PAGE = "http://tripleo.org/cistatus-periodic.html"
+MAIN_PAGE = "http://tripleo.org/cistatus.html"
 
 
 PATTERNS = [
     {
         "pattern": "Stack overcloud CREATE_COMPLETE",
-        "msg": "Overcloud stack installation: SUCCESS. "
+        "msg": "Overcloud stack installation: SUCCESS."
     },
     {
         "pattern": "Stack overcloud CREATE_FAILED",
-        "msg": "Overcloud stack: FAILED. "
+        "msg": "Overcloud stack: FAILED."
     },
     {
         "pattern": "No valid host was found. There are not enough hosts",
-        "msg": "No valid host was found. "
+        "msg": "No valid host was found."
     },
     {
         "pattern": "Failed to connect to trunk.rdoproject.org port 80",
-        "msg": "Connection failure to trunk.rdoproject.org. "
+        "msg": "Connection failure to trunk.rdoproject.org."
     },
     {
         "pattern": "Overloud pingtest, FAIL",
-        "msg": "Overcloud pingtest FAILED"
+        "msg": "Overcloud pingtest FAILED."
+    },
+    {
+        "pattern": "Overcloud pingtest, failed",
+        "msg": "Overcloud pingtest FAILED."
     },
     {
         "pattern": "Error contacting Ironic server: Node ",
-        "msg": "Ironic introspection FAIL. "
+        "msg": "Ironic introspection FAIL."
     },
     {
         "pattern": "Introspection completed with errors:",
-        "msg": "Ironic introspection FAIL. "
+        "msg": "Ironic introspection FAIL."
     },
     {
         "pattern": ": Introspection timeout",
-        "msg": "Introspection timeout. "
+        "msg": "Introspection timeout."
     },
     {
         "pattern": "is locked by host localhost.localdomain, please retry",
-        "msg": "Ironic: Host locking error. "
+        "msg": "Ironic: Host locking error."
     },
     {
         "pattern": "Timed out waiting for node ",
-        "msg": "Ironic node register FAIL: timeout for node. "
+        "msg": "Ironic node register FAIL: timeout for node."
     },
     {
         "pattern": "Killed                  ./testenv-client -b",
@@ -58,15 +65,40 @@ PATTERNS = [
     },
     {
         "pattern": timeout_re,
-        "msg": "Killed by timeout. "
+        "msg": "Killed by timeout."
+    },
+    {
+        "pattern": puppet_re,
+        "msg": "Pupppet {} FAIL."
+    },
+    {
+        "pattern": "Stack not found: overcloud",
+        "msg": "Didn't reach overcloud installation step."
+    },
+    {
+        "pattern": "Error: couldn't connect to server 127.0.0.1:27017",
+        "msg": "MongoDB FAIL."
+    },
+    {
+        "pattern": "Keystone_tenant[service]/ensure: change from absent to present failed",
+        "msg": "Keystone FAIL."
+    },
+    {
+        "pattern": "ERROR:dlrn:cmd failed. See logs at",
+        "msg": "Delorean FAIL."
+    },
+    {
+        "pattern": "500 Internal Server Error: Failed to upload image",
+        "msg": "Glance upload FAIL."
     },
 ]
-
 
 def parse(td):
     colors = {'color : #008800': 'green',
               'color : #FF0000': 'red',
-              'text-decoration:none': 'none'}
+              'text-decoration:none': 'none',
+              'color : #666666': 'none',
+              'color : #000000': 'none'}
     build, log = td.xpath(".//a")
     length = re.search("(\d+) min", build.tail).group(1)
     date = re.search("(\d+-\d+)", build.text).group(1)
@@ -106,7 +138,7 @@ def parse_page(main_page):
 
 def download(g, path):
     console = g['log_url'] + "console.html"
-    name = g['log_hash'] + ".html"
+    name = g['log_hash'] + ".html.gz"
     if not os.path.exists(path):
         os.makedirs(path)
     if os.path.exists(os.path.join(path, name)):
@@ -119,53 +151,69 @@ def download(g, path):
             if req.status_code != 200:
                 print "URL " + console + " is not accessible! Skipping..,"
                 return False
-        with open(os.path.join(path, name), "w") as f:
+        with gzip.open(os.path.join(path, name), "wb") as f:
             f.write(req.content)
         return True
 
+def include(job, job_type=None, short=None, fail=True):
+    if job_type and job["job_type"] != job_type:
+        return False
+    if short and job["short_type"] != short:
+        return False
+    if fail and job['color'] != 'red':
+        return False
+    return True
 
-def limit_jobs(jobs, job_type=None, number=14, short=None, fail=True):
-    res = sorted(jobs, key=lambda x: x['date'], reverse=True)
-    if job_type:
-        res = [i for i in res if i['job_type'] == job_type]
-    if short:
-        res = [i for i in res if i['short_type'] == short]
-    if fail:
-        res = [i for i in res if i['color'] == 'red']
-    if number:
-        res = res[:number]
-    return res
+
+def limit(jobs, job_type=None, number=0, short=None, fail=True):
+    jobs = sorted(jobs, key=lambda x: x['date'], reverse=True)
+    counter = 0
+    for job in jobs:
+        if (counter < number
+            and include(job, job_type, short, fail)
+            and download(job, path=LOGS_DIR)):
+            yield job
+            counter += 1
 
 
 def analyze(j, logpath):
     def line_match(pat, line):
         if isinstance(pat, re._pattern_type):
-            return pat.search(line)
+            if not pat.search(line):
+                return False
+            elif pat.search(line).groups():
+                return pat.search(line).group(1)
+            else:
+                return True
         if isinstance(pat, str):
             return pat in line
 
-    jfile = os.path.join(logpath, j['log_hash'] + ".html")
-    msg = ''
+    jfile = os.path.join(logpath, j['log_hash'] + ".html.gz")
+    msg = set()
     delim = "||"
-    for line in fileinput.input(jfile):
+    for line in fileinput.input(jfile, openhook=fileinput.hook_compressed):
         for p in PATTERNS:
             if line_match(p["pattern"], line) and p["msg"] not in msg:
-                msg += p["msg"]
+                msg.add(p["msg"].format(line_match(p["pattern"], line)))
     if not msg:
-        msg = "Reason was NOT FOUND. Please investigate"
+        msg = {"Reason was NOT FOUND. Please investigate"}
         delim = "XX"
-    all_msg = "{date}:\t{job_type:38}\t{delim}\t{msg:50}\t{delim}\tlog: {log_url}"
-    print all_msg.format(msg=msg, delim=delim, **j)
+    all_msg = ("{date}:\t"
+               "{job_type:38}\t"
+               "{delim}\t"
+               "{msg:60}\t"
+               "{delim}\t"
+               "log: {log_url}")
+    print all_msg.format(msg=" ".join(sorted(msg)), delim=delim, **j)
 
 
 def main():
-    LIMIT_JOBS = 7
-    INTERESTED_JOB_TYPE = None #  or None for all
+    LIMIT_JOBS = 20
+    INTERESTED_JOB_TYPE = "upgrades" #  or None for all (ha, nonha, upgrades, etc)
     short_name = sys.argv[1] if len(sys.argv) > 1 else INTERESTED_JOB_TYPE
 
     jobs = parse_page(MAIN_PAGE)
-    jobs = [job for job in jobs if download(job, path=LOGS_DIR)]
-    for job in limit_jobs(jobs, short=short_name, number=LIMIT_JOBS):
+    for job in limit(jobs, short=short_name, number=LIMIT_JOBS):
         analyze(job, LOGS_DIR)
 
 

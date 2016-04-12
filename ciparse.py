@@ -141,6 +141,11 @@ PATTERNS = [
         "msg": "Slave FAIL: no longer a configured node",
         "tag": "infra"
     },
+    {
+        "pattern": "cd: /opt/stack/new/delorean/data/repos: No such file or directory",
+        "msg": "Delorean build FAIL, needs a patch.",
+        "tag": "code"
+    },
 
 ]
 
@@ -296,7 +301,7 @@ def main():
     # How many jobs to print
     LIMIT_JOBS = 50
     # How many days to include, None for all days, 1 - for today
-    DAYS = None
+    DAYS = 1
     # Which kind of jobs to take? ha, nonha, upgrades, None - for all
     INTERESTED_JOB_TYPE = None #  or None for all (ha, nonha, upgrades, etc)
     EXCLUDED_JOB_TYPE = "containers"

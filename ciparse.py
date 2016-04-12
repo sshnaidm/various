@@ -2,6 +2,8 @@ import fileinput
 import gzip
 import os
 import re
+
+import datetime
 import requests
 import sys
 from lxml import etree
@@ -207,22 +209,41 @@ def download(g, path):
             f.write(req.content)
         return True
 
-def include(job, job_type=None, short=None, fail=True):
+def include(job,
+            job_type=None, short=None, dates=None, excluded=None, fail=True):
     if job_type and job["job_type"] != job_type:
         return False
     if short and job["short_type"] != short:
+        return False
+    if dates and job["date"] not in dates:
+        return False
+    if excluded and job["short_type"] == excluded:
         return False
     if fail and job['color'] != 'red':
         return False
     return True
 
 
-def limit(jobs, job_type=None, number=0, short=None, fail=True):
+def limit(jobs,
+          job_type=None,
+          number=0,
+          short=None,
+          days=None,
+          excluded=None,
+          fail=True):
     jobs = sorted(jobs, key=lambda x: x['date'], reverse=True)
     counter = 0
+    if days:
+        today = datetime.date.today()
+        parse_day = lambda x: datetime.date.strftime(x, "%m-%d")
+        dates = []
+        for i in xrange(days):
+            dates.append(parse_day(today - datetime.timedelta(days=i)))
+    else:
+        dates = None
     for job in jobs:
         if (counter < number
-            and include(job, job_type, short, fail)
+            and include(job, job_type, short, dates, excluded, fail)
             and download(job, path=LOGS_DIR)):
             yield job
             counter += 1
@@ -274,13 +295,20 @@ def print_stats(s):
 def main():
     # How many jobs to print
     LIMIT_JOBS = 50
+    # How many days to include, None for all days, 1 - for today
+    DAYS = None
     # Which kind of jobs to take? ha, nonha, upgrades, None - for all
-    INTERESTED_JOB_TYPE = "nonha" #  or None for all (ha, nonha, upgrades, etc)
+    INTERESTED_JOB_TYPE = None #  or None for all (ha, nonha, upgrades, etc)
+    EXCLUDED_JOB_TYPE = "containers"
     short_name = sys.argv[1] if len(sys.argv) > 1 else INTERESTED_JOB_TYPE
 
     stats = []
     jobs = parse_page(MAIN_PAGE)
-    for job in limit(jobs, short=short_name, number=LIMIT_JOBS):
+    for job in limit(jobs,
+                     short=short_name,
+                     number=LIMIT_JOBS,
+                     days=DAYS,
+                     excluded=EXCLUDED_JOB_TYPE):
         stats.append(analyze(job, LOGS_DIR))
     print "Statistics:"
     print "Analysis of page:", MAIN_PAGE

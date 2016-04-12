@@ -8,6 +8,8 @@ from lxml import etree
 
 timeout_re = re.compile('Killed\s+timeout -s 9 ')
 puppet_re = re.compile('"deploy_stderr": ".+?1;31mError: .+?\W(\w+)::')
+resolving_re = re.compile(
+    'Could not resolve host: (\S+); Name or service not known')
 
 LOGS_DIR = os.path.join(os.environ["HOME"], "tmp", "ci_status")
 #MAIN_PAGE = "http://tripleo.org/cistatus-periodic.html"
@@ -73,7 +75,7 @@ PATTERNS = [
     },
     {
         "pattern": "Stack not found: overcloud",
-        "msg": "Didn't reach overcloud installation step."
+        "msg": "Didn't reach overcloud step."
     },
     {
         "pattern": "Error: couldn't connect to server 127.0.0.1:27017",
@@ -91,6 +93,23 @@ PATTERNS = [
         "pattern": "500 Internal Server Error: Failed to upload image",
         "msg": "Glance upload FAIL."
     },
+    {
+        "pattern": "Slave went offline during the build",
+        "msg": "Jenkins slave FAIL."
+    },
+    {
+        "pattern": resolving_re,
+        "msg": "DNS resolve of {} FAIL."
+    },
+    {
+        "pattern": "fatal: The remote end hung up unexpectedly",
+        "msg": "Git clone repo FAIL."
+    },
+    {
+        "pattern": "Create timed out       | CREATE_FAILED",
+        "msg": "Create timed out."
+    },
+
 ]
 
 def parse(td):
@@ -209,9 +228,9 @@ def analyze(j, logpath):
 
 def main():
     # How many jobs to print
-    LIMIT_JOBS = 20
+    LIMIT_JOBS = 50
     # Which kind of jobs to take? ha, nonha, upgrades, None - for all
-    INTERESTED_JOB_TYPE = "upgrades" #  or None for all (ha, nonha, upgrades, etc)
+    INTERESTED_JOB_TYPE = "nonha" #  or None for all (ha, nonha, upgrades, etc)
     short_name = sys.argv[1] if len(sys.argv) > 1 else INTERESTED_JOB_TYPE
 
     jobs = parse_page(MAIN_PAGE)

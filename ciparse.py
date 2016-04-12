@@ -6,6 +6,8 @@ import requests
 import sys
 from lxml import etree
 
+requests.packages.urllib3.disable_warnings()
+
 timeout_re = re.compile('Killed\s+timeout -s 9 ')
 puppet_re = re.compile('"deploy_stderr": ".+?1;31mError: .+?\W(\w+)::')
 resolving_re = re.compile(
@@ -19,95 +21,123 @@ MAIN_PAGE = "http://tripleo.org/cistatus.html"
 PATTERNS = [
     {
         "pattern": "Stack overcloud CREATE_COMPLETE",
-        "msg": "Overcloud stack installation: SUCCESS."
+        "msg": "Overcloud stack installation: SUCCESS.",
+        "tag": ""
     },
     {
         "pattern": "Stack overcloud CREATE_FAILED",
-        "msg": "Overcloud stack: FAILED."
+        "msg": "Overcloud stack: FAILED.",
+        "tag": "code"
     },
     {
         "pattern": "No valid host was found. There are not enough hosts",
-        "msg": "No valid host was found."
+        "msg": "No valid host was found.",
+        "tag": "code"
     },
     {
         "pattern": "Failed to connect to trunk.rdoproject.org port 80",
-        "msg": "Connection failure to trunk.rdoproject.org."
+        "msg": "Connection failure to trunk.rdoproject.org.",
+        "tag": "infra"
     },
     {
         "pattern": "Overloud pingtest, FAIL",
-        "msg": "Overcloud pingtest FAILED."
+        "msg": "Overcloud pingtest FAILED.",
+        "tag": "code"
     },
     {
         "pattern": "Overcloud pingtest, failed",
-        "msg": "Overcloud pingtest FAILED."
+        "msg": "Overcloud pingtest FAILED.",
+        "tag": "code"
     },
     {
         "pattern": "Error contacting Ironic server: Node ",
-        "msg": "Ironic introspection FAIL."
+        "msg": "Ironic introspection FAIL.",
+        "tag": "code"
     },
     {
         "pattern": "Introspection completed with errors:",
-        "msg": "Ironic introspection FAIL."
+        "msg": "Ironic introspection FAIL.",
+        "tag": "code"
     },
     {
         "pattern": ": Introspection timeout",
-        "msg": "Introspection timeout."
+        "msg": "Introspection timeout.",
+        "tag": "code"
     },
     {
         "pattern": "is locked by host localhost.localdomain, please retry",
-        "msg": "Ironic: Host locking error."
+        "msg": "Ironic: Host locking error.",
+        "tag": "code"
     },
     {
         "pattern": "Timed out waiting for node ",
-        "msg": "Ironic node register FAIL: timeout for node."
+        "msg": "Ironic node register FAIL: timeout for node.",
+        "tag": "code"
     },
     {
         "pattern": "Killed                  ./testenv-client -b",
-        "msg": "Job was killed by testenv-client. Timeout??"
+        "msg": "Job was killed by testenv-client. Timeout??",
+        "tag": "infra"
     },
     {
         "pattern": timeout_re,
-        "msg": "Killed by timeout."
+        "msg": "Killed by timeout.",
+        "tag": "infra"
     },
     {
         "pattern": puppet_re,
-        "msg": "Pupppet {} FAIL."
+        "msg": "Pupppet {} FAIL.",
+        "tag": "code"
     },
     {
         "pattern": "Stack not found: overcloud",
-        "msg": "Didn't reach overcloud step."
+        "msg": "Didn't reach overcloud step.",
+        "tag": ""
     },
     {
         "pattern": "Error: couldn't connect to server 127.0.0.1:27017",
-        "msg": "MongoDB FAIL."
+        "msg": "MongoDB FAIL.",
+        "tag": "code"
     },
     {
         "pattern": "Keystone_tenant[service]/ensure: change from absent to present failed",
-        "msg": "Keystone FAIL."
+        "msg": "Keystone FAIL.",
+        "tag": "code"
     },
     {
         "pattern": "ERROR:dlrn:cmd failed. See logs at",
-        "msg": "Delorean FAIL."
+        "msg": "Delorean FAIL.",
+        "tag": "code"
     },
     {
         "pattern": "500 Internal Server Error: Failed to upload image",
-        "msg": "Glance upload FAIL."
+        "msg": "Glance upload FAIL.",
+        "tag": "code"
     },
     {
         "pattern": "Slave went offline during the build",
-        "msg": "Jenkins slave FAIL."
+        "msg": "Jenkins slave FAIL.",
+        "tag": "infra"
     },
     {
         "pattern": resolving_re,
-        "msg": "DNS resolve of {} FAIL."
+        "msg": "DNS resolve of {} FAIL.",
+        "tag": "infra"
     },
     {
         "pattern": "fatal: The remote end hung up unexpectedly",
-        "msg": "Git clone repo FAIL."
+        "msg": "Git clone repo FAIL.",
+        "tag": "infra"
     },
     {
         "pattern": "Create timed out       | CREATE_FAILED",
-        "msg": "Create timed out."
+        "msg": "Create timed out.",
+        "tag": "code"
+    },
+    {
+        "pattern": "FATAL: no longer a configured node for ",
+        "msg": "Slave FAIL: no longer a configured node",
+        "tag": "infra"
     },
 
 ]
@@ -168,8 +198,11 @@ def download(g, path):
             new_url = console + ".gz"
             req = requests.get(new_url)
             if req.status_code != 200:
-                print "URL " + console + " is not accessible! Skipping..,"
-                return False
+                build_console = g['build_url'] + "/consoleText"
+                req = requests.get(build_console, verify=False)
+                if req.status_code != 200:
+                    print "URL " + console + " is not accessible! Skipping..,"
+                    return False
         with gzip.open(os.path.join(path, name), "wb") as f:
             f.write(req.content)
         return True
@@ -210,13 +243,16 @@ def analyze(j, logpath):
     jfile = os.path.join(logpath, j['log_hash'] + ".html.gz")
     msg = set()
     delim = "||"
+    tags = set()
     for line in fileinput.input(jfile, openhook=fileinput.hook_compressed):
         for p in PATTERNS:
             if line_match(p["pattern"], line) and p["msg"] not in msg:
                 msg.add(p["msg"].format(line_match(p["pattern"], line)))
+                tags.add(p["tag"])
     if not msg:
         msg = {"Reason was NOT FOUND. Please investigate"}
         delim = "XX"
+        tags.add("unknown")
     all_msg = ("{date}:\t"
                "{job_type:38}\t"
                "{delim}\t"
@@ -224,6 +260,15 @@ def analyze(j, logpath):
                "{delim}\t"
                "log: {log_url}")
     print all_msg.format(msg=" ".join(sorted(msg)), delim=delim, **j)
+    return tags
+
+def print_stats(s):
+    tags = [j for i in s for j in i if j]
+    for t in set(tags):
+        print "Reason - {}: {} fails, {}% of counted {} jobs".format(
+            t, tags.count(t), tags.count(t) * 100 / len(s), len(s))
+
+
 
 
 def main():
@@ -233,9 +278,14 @@ def main():
     INTERESTED_JOB_TYPE = "nonha" #  or None for all (ha, nonha, upgrades, etc)
     short_name = sys.argv[1] if len(sys.argv) > 1 else INTERESTED_JOB_TYPE
 
+    stats = []
     jobs = parse_page(MAIN_PAGE)
     for job in limit(jobs, short=short_name, number=LIMIT_JOBS):
-        analyze(job, LOGS_DIR)
+        stats.append(analyze(job, LOGS_DIR))
+    print "Statistics:"
+    print "Analysis of page:", MAIN_PAGE
+    print "Job type:", short_name or "all"
+    print_stats(stats)
 
 
 if __name__ == '__main__':

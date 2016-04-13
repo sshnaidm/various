@@ -15,9 +15,7 @@ puppet_re = re.compile('"deploy_stderr": ".+?1;31mError: .+?\W(\w+)::')
 resolving_re = re.compile(
     'Could not resolve host: (\S+); Name or service not known')
 
-LOGS_DIR = os.path.join(os.environ["HOME"], "tmp", "ci_status")
-#MAIN_PAGE = "http://tripleo.org/cistatus-periodic.html"
-MAIN_PAGE = "http://tripleo.org/cistatus.html"
+
 
 
 PATTERNS = [
@@ -92,18 +90,8 @@ PATTERNS = [
         "tag": "code"
     },
     {
-        "pattern": "Stack not found: overcloud",
-        "msg": "Didn't reach overcloud step.",
-        "tag": ""
-    },
-    {
         "pattern": "Error: couldn't connect to server 127.0.0.1:27017",
         "msg": "MongoDB FAIL.",
-        "tag": "code"
-    },
-    {
-        "pattern": "Keystone_tenant[service]/ensure: change from absent to present failed",
-        "msg": "Keystone FAIL.",
         "tag": "code"
     },
     {
@@ -143,13 +131,13 @@ PATTERNS = [
     },
     {
         "pattern": "cd: /opt/stack/new/delorean/data/repos: No such file or directory",
-        "msg": "Delorean build FAIL, needs a patch.",
+        "msg": "Delorean repo build FAIL.",
         "tag": "code"
     },
 
 ]
 
-def parse(td):
+def parse_cell(td):
     colors = {'color : #008800': 'green',
               'color : #FF0000': 'red',
               'text-decoration:none': 'none',
@@ -188,7 +176,7 @@ def parse_page(main_page):
     tds_gen = (i for i in et.xpath(".//td") if len(i.xpath(".//a")) == 2)
     tds = (i for i in tds_gen if
            "http://logs.openstack.org" in i.xpath(".//a")[1].attrib["href"])
-    data = [parse(td) for td in tds]
+    data = [parse_cell(td) for td in tds]
     return data
 
 
@@ -235,7 +223,8 @@ def limit(jobs,
           short=None,
           days=None,
           excluded=None,
-          fail=True):
+          fail=True,
+          down_path=None):
     jobs = sorted(jobs, key=lambda x: x['date'], reverse=True)
     counter = 0
     if days:
@@ -249,7 +238,7 @@ def limit(jobs,
     for job in jobs:
         if (counter < number
             and include(job, job_type, short, dates, excluded, fail)
-            and download(job, path=LOGS_DIR)):
+            and download(job, path=down_path)):
             yield job
             counter += 1
 
@@ -268,8 +257,8 @@ def analyze(j, logpath):
 
     jfile = os.path.join(logpath, j['log_hash'] + ".html.gz")
     msg = set()
-    delim = "||"
     tags = set()
+    found_reason = True
     for line in fileinput.input(jfile, openhook=fileinput.hook_compressed):
         for p in PATTERNS:
             if line_match(p["pattern"], line) and p["msg"] not in msg:
@@ -277,44 +266,73 @@ def analyze(j, logpath):
                 tags.add(p["tag"])
     if not msg:
         msg = {"Reason was NOT FOUND. Please investigate"}
-        delim = "XX"
+        found_reason = False
         tags.add("unknown")
-    all_msg = ("{date}:\t"
+
+    templ = ("{date}:\t"
                "{job_type:38}\t"
                "{delim}\t"
                "{msg:60}\t"
                "{delim}\t"
                "log: {log_url}")
-    print all_msg.format(msg=" ".join(sorted(msg)), delim=delim, **j)
-    return tags
+    text = templ.format(msg=" ".join(sorted(msg)),
+                      delim="||" if found_reason else "XX",
+                      **j)
+    message = {
+        "text": text,
+        "tags": tags,
+        "msg": msg,
+        "reason": found_reason,
+        "job": j
+    }
+    print text
+    return message
 
 def print_stats(s):
-    tags = [j for i in s for j in i if j]
+    stats_tags = [i['tags'] for i in s]
+    tags = [j for i in stats_tags for j in i if j]
     for t in set(tags):
         print "Reason - {}: {} fails, {}% of counted {} jobs".format(
             t, tags.count(t), tags.count(t) * 100 / len(s), len(s))
 
 
+def run(amount=10,
+        days=1,
+        job_type=None,
+        excluded="containers",
+        down_path=os.path.join(os.environ["HOME"], "tmp", "ci_status"),
+        page="http://tripleo.org/cistatus.html"):
+    stats = []
+    jobs = parse_page(page)
+    for job in limit(jobs,
+                     short=job_type,
+                     number=amount,
+                     days=days,
+                     excluded=excluded,
+                     down_path=down_path):
+        stats.append(analyze(job, down_path))
+    return stats
 
 
 def main():
+    LOGS_DIR = os.path.join(os.environ["HOME"], "tmp", "ci_status")
+    # MAIN_PAGE = "http://tripleo.org/cistatus-periodic.html"
+    MAIN_PAGE = "http://tripleo.org/cistatus.html"
     # How many jobs to print
-    LIMIT_JOBS = 50
+    LIMIT_JOBS = 10
     # How many days to include, None for all days, 1 - for today
-    DAYS = 1
+    DAYS = 2
     # Which kind of jobs to take? ha, nonha, upgrades, None - for all
     INTERESTED_JOB_TYPE = None #  or None for all (ha, nonha, upgrades, etc)
     EXCLUDED_JOB_TYPE = "containers"
     short_name = sys.argv[1] if len(sys.argv) > 1 else INTERESTED_JOB_TYPE
 
-    stats = []
-    jobs = parse_page(MAIN_PAGE)
-    for job in limit(jobs,
-                     short=short_name,
-                     number=LIMIT_JOBS,
-                     days=DAYS,
-                     excluded=EXCLUDED_JOB_TYPE):
-        stats.append(analyze(job, LOGS_DIR))
+    stats = run(amount=LIMIT_JOBS,
+                days=DAYS,
+                job_type=short_name,
+                excluded=EXCLUDED_JOB_TYPE,
+                down_path=LOGS_DIR,
+                page=MAIN_PAGE)
     print "Statistics:"
     print "Analysis of page:", MAIN_PAGE
     print "Job type:", short_name or "all"

@@ -1,8 +1,8 @@
 import fileinput
 import gzip
+import json
 import os
 import re
-
 import datetime
 import requests
 import sys
@@ -14,9 +14,10 @@ timeout_re = re.compile('Killed\s+timeout -s 9 ')
 puppet_re = re.compile('"deploy_stderr": ".+?1;31mError: .+?\W(\w+)::')
 resolving_re = re.compile(
     'Could not resolve host: (\S+); Name or service not known')
+exec_re = re.compile('mError: (\S+?) \S+ returned 1 instead of one of')
+patchset_re = re.compile('(https://review.openstack.org/\d+)')
 
-
-
+VERBOSE = False
 
 PATTERNS = [
     {
@@ -86,12 +87,12 @@ PATTERNS = [
     },
     {
         "pattern": puppet_re,
-        "msg": "Pupppet {} FAIL.",
+        "msg": "Puppet {} FAIL.",
         "tag": "code"
     },
     {
-        "pattern": "Error: couldn't connect to server 127.0.0.1:27017",
-        "msg": "MongoDB FAIL.",
+        "pattern": exec_re,
+        "msg": "Program {} FAIL.",
         "tag": "code"
     },
     {
@@ -130,12 +131,25 @@ PATTERNS = [
         "tag": "infra"
     },
     {
-        "pattern": "cd: /opt/stack/new/delorean/data/repos: No such file or directory",
+        "pattern": ("cd: /opt/stack/new/delorean/data/repos: "
+                    "No such file or directory"),
         "msg": "Delorean repo build FAIL.",
         "tag": "code"
     },
-
+    {
+        "pattern": ("[ERROR] - SEVERE ERROR occurs: "
+                    "java.lang.InterruptedException"),
+        "msg": "Jenkins lave FAIL: InterruptedException",
+        "tag": "infra"
+    },
+    {
+        "pattern": ("Killed                  bash -xe "
+                    "/opt/stack/new/tripleo-ci/toci_gate_test.sh"),
+        "msg": "Main script timeout",
+        "tag": "infra"
+    },
 ]
+
 
 def parse_cell(td):
     colors = {'color : #008800': 'green',
@@ -202,6 +216,26 @@ def download(g, path):
             f.write(req.content)
         return True
 
+
+def download_buildurl(g, path):
+    url = g['build_url'] + "/api/json"
+    name = g['log_hash'] + ".json.gz"
+    if not os.path.exists(path):
+        os.makedirs(path)
+    if os.path.exists(os.path.join(path, name)):
+        return True
+    req = requests.get(url)
+    if req.status_code != 200:
+        return False
+    try:
+        text = json.load(req.content)
+    except:
+        return False
+    with gzip.open(os.path.join(path, name), "wb") as f:
+        f.write(text)
+    return True
+
+
 def include(job,
             job_type=None, short=None, dates=None, excluded=None, fail=True):
     if job_type and job["job_type"] != job_type:
@@ -225,11 +259,14 @@ def limit(jobs,
           excluded=None,
           fail=True,
           down_path=None):
+    def parse_day(x):
+        return datetime.date.strftime(x, "%m-%d")
+
     jobs = sorted(jobs, key=lambda x: x['date'], reverse=True)
     counter = 0
     if days:
         today = datetime.date.today()
-        parse_day = lambda x: datetime.date.strftime(x, "%m-%d")
+
         dates = []
         for i in xrange(days):
             dates.append(parse_day(today - datetime.timedelta(days=i)))
@@ -259,34 +296,60 @@ def analyze(j, logpath):
     msg = set()
     tags = set()
     found_reason = True
-    for line in fileinput.input(jfile, openhook=fileinput.hook_compressed):
-        for p in PATTERNS:
-            if line_match(p["pattern"], line) and p["msg"] not in msg:
-                msg.add(p["msg"].format(line_match(p["pattern"], line)))
-                tags.add(p["tag"])
-    if not msg:
-        msg = {"Reason was NOT FOUND. Please investigate"}
+    patch_url = ""
+    try:
+        for line in fileinput.input(jfile, openhook=fileinput.hook_compressed):
+            for p in PATTERNS:
+                if line_match(p["pattern"], line) and p["msg"] not in msg:
+                    msg.add(p["msg"].format(line_match(p["pattern"], line)))
+                    tags.add(p["tag"])
+            if "Triggered by:" in line and patchset_re.search(line):
+                patch_url = patchset_re.search(line).group(1)
+        if not msg:
+            msg = {"Reason was NOT FOUND. Please investigate"}
+            found_reason = False
+            tags.add("unknown")
+    except Exception as e:
+        print "Exception when parsing {}: {}".format(jfile, str(e))
+        msg = {"Error when parsing logs. Please investigate"}
         found_reason = False
         tags.add("unknown")
-
     templ = ("{date}:\t"
-               "{job_type:38}\t"
-               "{delim}\t"
-               "{msg:60}\t"
-               "{delim}\t"
-               "log: {log_url}")
+             "{job_type:38}\t"
+             "{delim}\t"
+             "{msg:60}\t"
+             "{delim}\t"
+             "log: {log_url}")
     text = templ.format(msg=" ".join(sorted(msg)),
-                      delim="||" if found_reason else "XX",
-                      **j)
+                        delim="||" if found_reason else "XX",
+                        **j)
     message = {
         "text": text,
         "tags": tags,
         "msg": msg,
         "reason": found_reason,
-        "job": j
+        "job": j,
+        "periodic": "periodic" in j["job_type"],
+        "patch_url": patch_url
     }
-    print text
     return message
+
+
+def run(amount=10,
+        days=1,
+        job_type=None,
+        excluded="containers",
+        down_path=os.path.join(os.environ["HOME"], "tmp", "ci_status"),
+        page="http://tripleo.org/cistatus.html"):
+    jobs = parse_page(page)
+    for job in limit(jobs,
+                     short=job_type,
+                     number=amount,
+                     days=days,
+                     excluded=excluded,
+                     down_path=down_path):
+        yield analyze(job, down_path)
+
 
 def print_stats(s):
     stats_tags = [i['tags'] for i in s]
@@ -296,34 +359,25 @@ def print_stats(s):
             t, tags.count(t), tags.count(t) * 100 / len(s), len(s))
 
 
-def run(amount=10,
-        days=1,
-        job_type=None,
-        excluded="containers",
-        down_path=os.path.join(os.environ["HOME"], "tmp", "ci_status"),
-        page="http://tripleo.org/cistatus.html"):
-    stats = []
-    jobs = parse_page(page)
-    for job in limit(jobs,
-                     short=job_type,
-                     number=amount,
-                     days=days,
-                     excluded=excluded,
-                     down_path=down_path):
-        stats.append(analyze(job, down_path))
-    return stats
+def print_analysis(messages):
+    list_messages = []
+    for msg in messages:
+        list_messages.append(msg)
+        print (msg['text'] + (" Patch: " + msg["patch_url"] if VERBOSE else "")
+               + (" Build: " + msg["job"]["build_url"] if VERBOSE else ""))
+    return list_messages
 
 
 def main():
     LOGS_DIR = os.path.join(os.environ["HOME"], "tmp", "ci_status")
-    # MAIN_PAGE = "http://tripleo.org/cistatus-periodic.html"
+    #MAIN_PAGE = "http://tripleo.org/cistatus-periodic.html"
     MAIN_PAGE = "http://tripleo.org/cistatus.html"
     # How many jobs to print
-    LIMIT_JOBS = 10
+    LIMIT_JOBS = 30
     # How many days to include, None for all days, 1 - for today
-    DAYS = 2
+    DAYS = 0
     # Which kind of jobs to take? ha, nonha, upgrades, None - for all
-    INTERESTED_JOB_TYPE = None #  or None for all (ha, nonha, upgrades, etc)
+    INTERESTED_JOB_TYPE = "ha"  # or None for all (ha, nonha, upgrades, etc)
     EXCLUDED_JOB_TYPE = "containers"
     short_name = sys.argv[1] if len(sys.argv) > 1 else INTERESTED_JOB_TYPE
 
@@ -333,10 +387,11 @@ def main():
                 excluded=EXCLUDED_JOB_TYPE,
                 down_path=LOGS_DIR,
                 page=MAIN_PAGE)
+    stats_list = print_analysis(stats)
     print "Statistics:"
     print "Analysis of page:", MAIN_PAGE
     print "Job type:", short_name or "all"
-    print_stats(stats)
+    print_stats(stats_list)
 
 
 if __name__ == '__main__':

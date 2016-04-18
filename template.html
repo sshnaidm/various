@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap-theme.min.css">
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+
+    <title>TripleO jobs</title>
+</head>
+<body>
+
+<ul class="nav nav-tabs">
+
+    {% for data in (ci, periodic) %}
+        {% for key in data %}
+          <li{%  if loop.first %} class="active"{% endif %}><a data-toggle="tab" href="#{{ key }}">{{ key }}</a></li>
+        {% endfor %}
+    {% endfor %}
+    <li><a data-toggle="tab" href="#" id="all">All</a></li>
+</ul>
+
+<div class="tab-content">
+
+{% for data in (ci, periodic) %}
+    {% set rowloop = loop %}
+    {% for key in data %}
+        <div id="{{ key }}" class="tab-pane fade{% if rowloop.first and loop.first%} in active{%  endif %}">
+        <h3 style="align-content: center">{{ key }}</h3>
+            <table class="table table-hover">
+            <thead><td>Date</td><td>Build</td><td>Patch</td><td>Logs</td><td>Reason</td></thead>
+            {%  for i in data[key] %}
+                <tr style="color:{% if i.reason and 'infra' in i.tags %}red{% elif i.reason %}blue{% else %}black{% endif %}">
+                    <td style="color:{% if i.reason and 'infra' in i.tags %}red{% elif i.reason %}blue{% else %}black{% endif %}">
+                    | {{  i.job.date }}-{{ i.job.time }} |
+                    </td><td style="color:{% if i.reason and 'infra' in i.tags %}red{% elif i.reason %}blue{% else %}black{% endif %}">
+                    {#  {{ i.job.job_type }} |  #}
+                    | {{ i.msg | join(' ')}} |
+                    </td>
+                    <td>
+                    | <a href="{{ i.job.build_url }}">Jenkins</a> |
+                    </td><td>
+                    {% if not i.periodic %}| {%  if i.patch_url %}<a href="{{ i.patch_url }}">Patch</a>{%  else %}No patch URL{%  endif %} |</td><td>{% endif %}
+                    | <a href="{{ i.job.log_url }}">Logs</a> |
+                    </td>
+                </tr>
+            {%  endfor %}
+            </table>
+        </div>
+    {% endfor %}
+<hr width="40%">
+{% endfor %}
+
+</div>
+<script>
+$('#all').on('click',function(){
+  $('#all').parent().addClass('active');
+  $('.tab-pane').addClass('active in');
+  $('[data-toggle="tab"]').parent().removeClass('active');
+});
+</script>
+</body>
+</html>

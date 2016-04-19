@@ -16,6 +16,8 @@ resolving_re = re.compile(
     'Could not resolve host: (\S+); Name or service not known')
 exec_re = re.compile('mError: (\S+?) \S+ returned 1 instead of one of')
 patchset_re = re.compile('(https://review.openstack.org/\d+)')
+date_re = re.compile("Date: \d+-(\d+-\d+) (\d+:\d+)")
+len_re = re.compile("- (\d+[mhs])")
 
 VERBOSE = False
 
@@ -151,46 +153,62 @@ PATTERNS = [
 ]
 
 
-def parse_cell(td):
+def parse_tr(tr, names):
     colors = {'color : #008800': 'green',
               'color : #FF0000': 'red',
               'text-decoration:none': 'none',
               'color : #666666': 'none',
               'color : #000000': 'none'}
-    build, log = td.xpath(".//a")
-    length = re.search("(\d+) min", build.tail).group(1)
-    date = re.search("(\d+-\d+)", build.text).group(1)
-    time = re.search("(\d+:\d+)", build.text).group(1)
-    stat = re.search("(\d+/\d+)", log.tail).group(1)
-    color = colors[build.attrib['style']]
-    log_url = log.attrib['href']
-    build_url = build.attrib['href']
-    job_type = re.search(".*/job/([^/]+)/", build_url).group(1)
-    log_hash = re.search(".*/([^/]+)/$", log_url).group(1)
-    short_type = job_type.split("-")[-1]
-    return {
-        'log_url': log_url,
-        'log_hash': log_hash,
-        'build_url': build_url,
-        'length': length,
-        'job_type': job_type,
-        'color': color,
-        'stat': stat,
-        'time': time,
-        'date': date,
-        "short_type": short_type,
-        'td': td
-    }
+    for index, td in enumerate([i for i in tr.xpath(".//td")]):
+        if index == 0:
+            if not td.text:
+                print td.text
+                print td.attrib
+                print td.tail
+                print td
+                print " ".join(tr.xpath(".//text()"))
+                return
+            date, time = date_re.search(td.text).groups()
+        if not td.xpath(".//a"):
+            continue
+        else:
+            patch, log = td.xpath(".//a")
+            patch_url = patch.attrib['href']
+            log_url = log.attrib['href']
+            log_hash = re.search(".*/([^/]+)/$", log_url).group(1)
+            color = colors[patch.attrib['style']]
+            job_type = names[index -1]
+            short_type = job_type.split("-")[-1]
+            length = len_re.search(td.xpath(".//a")[0].tail).group(1)
+            yield {
+                'log_url': log_url,
+                'log_hash': log_hash,
+                'build_url': None,
+                'length': length,
+                'job_type': job_type,
+                'color': color,
+                'stat': None,
+                'time': time,
+                'date': date,
+                "short_type": short_type,
+                'td': td
+            }
 
 
 def parse_page(main_page):
     page_obj = requests.get(main_page)
     page = page_obj.content
     et = etree.HTML(page)
-    tds_gen = (i for i in et.xpath(".//td") if len(i.xpath(".//a")) == 2)
-    tds = (i for i in tds_gen if
-           "http://logs.openstack.org" in i.xpath(".//a")[1].attrib["href"])
-    data = [parse_cell(td) for td in tds]
+    tr_head = [i for i in et.xpath(".//tr")
+               if i.attrib['class'] == 'headers'][0]
+    job_names = tr_head.xpath(".//td/b/text()")
+    trs_gen = (i for i in et.xpath(".//tr")
+               if i.attrib['class'] in ('tr1', 'tr0'))
+    data = []
+    for tr in trs_gen:
+        for i in parse_tr(tr, job_names):
+            if i:
+                data.append(i)
     return data
 
 
@@ -373,11 +391,11 @@ def main():
     #MAIN_PAGE = "http://tripleo.org/cistatus-periodic.html"
     MAIN_PAGE = "http://tripleo.org/cistatus.html"
     # How many jobs to print
-    LIMIT_JOBS = 30
+    LIMIT_JOBS = 1000
     # How many days to include, None for all days, 1 - for today
-    DAYS = 0
+    DAYS = 1
     # Which kind of jobs to take? ha, nonha, upgrades, None - for all
-    INTERESTED_JOB_TYPE = "ha"  # or None for all (ha, nonha, upgrades, etc)
+    INTERESTED_JOB_TYPE = None  # or None for all (ha, nonha, upgrades, etc)
     EXCLUDED_JOB_TYPE = "containers"
     short_name = sys.argv[1] if len(sys.argv) > 1 else INTERESTED_JOB_TYPE
 

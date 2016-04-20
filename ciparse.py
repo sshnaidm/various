@@ -128,6 +128,11 @@ PATTERNS = [
         "tag": "code"
     },
     {
+        "pattern": "[overcloud]: CREATE_FAILED Create timed out",
+        "msg": "Create timed out.",
+        "tag": "code"
+    },
+    {
         "pattern": "FATAL: no longer a configured node for ",
         "msg": "Slave FAIL: no longer a configured node",
         "tag": "infra"
@@ -393,7 +398,7 @@ def main():
     # How many jobs to print
     LIMIT_JOBS = 1000
     # How many days to include, None for all days, 1 - for today
-    DAYS = 7
+    DAYS = 2
     # Which kind of jobs to take? ha, nonha, upgrades, None - for all
     INTERESTED_JOB_TYPE = None  # or None for all (ha, nonha, upgrades, etc)
     EXCLUDED_JOB_TYPE = "containers"

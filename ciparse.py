@@ -121,6 +121,11 @@ PATTERNS = [
         "tag": "infra"
     },
     {
+        "pattern": "[overcloud]: CREATE_FAILED Create timed out",
+        "msg": "Create timed out.",
+        "tag": "code"
+    },
+    {
         "pattern": "Create timed out       | CREATE_FAILED",
         "msg": "Create timed out.",
         "tag": "code"

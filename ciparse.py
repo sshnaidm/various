@@ -393,7 +393,7 @@ def main():
     # How many jobs to print
     LIMIT_JOBS = 1000
     # How many days to include, None for all days, 1 - for today
-    DAYS = 1
+    DAYS = 7
     # Which kind of jobs to take? ha, nonha, upgrades, None - for all
     INTERESTED_JOB_TYPE = None  # or None for all (ha, nonha, upgrades, etc)
     EXCLUDED_JOB_TYPE = "containers"

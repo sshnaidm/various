@@ -45,7 +45,7 @@
                     | {{ i.msg | join(' ')}} |
                     </td>
                     <td>
-                    | <a href="{{ i.job.build_url }}">Jenkins</a> |
+                    | {% if i.job.build_url %}<a href="{{ i.job.build_url }}">Jenkins</a>{% else %}Jenkins N/A{% endif %} |
                     </td><td>
                     {% if not i.periodic %}| {%  if i.patch_url %}<a href="{{ i.patch_url }}">Patch</a>{%  else %}No patch URL{%  endif %} |</td><td>{% endif %}
                     | <a href="{{ i.job.log_url }}">Logs</a> |

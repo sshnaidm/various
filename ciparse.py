@@ -7,6 +7,7 @@ import datetime
 import requests
 import sys
 from lxml import etree
+from requests import ConnectionError
 
 requests.packages.urllib3.disable_warnings()
 
@@ -231,12 +232,24 @@ def download(g, path):
             req = requests.get(new_url)
             if req.status_code != 200:
                 build_console = g['build_url'] + "/consoleText"
-                req = requests.get(build_console, verify=False)
-                if req.status_code != 200:
-                    print "URL " + console + " is not accessible! Skipping..,"
+                try:
+                    req = requests.get(build_console, verify=False)
+                    if req.status_code != 200:
+                        print "URL " + console + " is not accessible! Skipping..,"
+                        return False
+                except ConnectionError:
+                    print "Jenkins build page is unavailable"
                     return False
+        postcilog = g['log_url'] + "/logs/postci.txt.gz"
+        post_req = requests.get(postcilog)
+        if post_req.status_code != 200:
+            postcilog = g['log_url'] + "/logs/postci.log.gz"
+            post_req = requests.get(postcilog)
+            if post_req.status_code != 200:
+                print "Postcilog is not downloadable: %s" % g['log_url']
+        postci = post_req.content or ""
         with gzip.open(os.path.join(path, name), "wb") as f:
-            f.write(req.content)
+            f.write(req.content + "\n" + postci)
         return True
 
 

@@ -16,7 +16,7 @@ puppet_re = re.compile('"deploy_stderr": ".+?1;31mError: .+?\W(\w+)::')
 resolving_re = re.compile(
     'Could not resolve host: (\S+); Name or service not known')
 exec_re = re.compile('mError: (\S+?) \S+ returned 1 instead of one of')
-patchset_re = re.compile('(https://review.openstack.org/\d+)')
+patchset_re = re.compile('(https://review.openstack.org/\d+).*patchset (\d+)')
 date_re = re.compile("Date: \d+-(\d+-\d+) (\d+:\d+)")
 len_re = re.compile("- (\d+[mhs])")
 
@@ -197,7 +197,8 @@ def parse_tr(tr, names):
                 'time': time,
                 'date': date,
                 "short_type": short_type,
-                'td': td
+                'td': td,
+                'patch_url': patch_url,
             }
 
 
@@ -332,7 +333,7 @@ def analyze(j, logpath):
     msg = set()
     tags = set()
     found_reason = True
-    patch_url = ""
+    patch_url = patchset = ""
     try:
         for line in fileinput.input(jfile, openhook=fileinput.hook_compressed):
             for p in PATTERNS:
@@ -340,7 +341,7 @@ def analyze(j, logpath):
                     msg.add(p["msg"].format(line_match(p["pattern"], line)))
                     tags.add(p["tag"])
             if "Triggered by:" in line and patchset_re.search(line):
-                patch_url = patchset_re.search(line).group(1)
+                patch_url, patchset = patchset_re.search(line).groups()
         if not msg:
             msg = {"Reason was NOT FOUND. Please investigate"}
             found_reason = False
@@ -366,7 +367,8 @@ def analyze(j, logpath):
         "reason": found_reason,
         "job": j,
         "periodic": "periodic" in j["job_type"],
-        "patch_url": patch_url
+        "patch_url": patch_url,
+        "patchset": patchset,
     }
     return message
 
@@ -409,7 +411,7 @@ def main():
     #MAIN_PAGE = "http://tripleo.org/cistatus-periodic.html"
     MAIN_PAGE = "http://tripleo.org/cistatus.html"
     # How many jobs to print
-    LIMIT_JOBS = 1000
+    LIMIT_JOBS = 5
     # How many days to include, None for all days, 1 - for today
     DAYS = 2
     # Which kind of jobs to take? ha, nonha, upgrades, None - for all

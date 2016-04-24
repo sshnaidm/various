@@ -165,6 +165,12 @@ PATTERNS = [
         "msg": "Main script timeout",
         "tag": "infra"
     },
+    {
+        "pattern": ("Command 'instack-install-undercloud' "
+                    "returned non-zero exit status"),
+        "msg": "Undercloud install FAIL.",
+        "tag": "code"
+    },
 ]
 
 
@@ -312,8 +318,6 @@ def download(g, path):
         if post_req.status_code != 200:
             postcilog = g['log_url'] + "/logs/postci.log.gz"
             post_req = requests.get(postcilog)
-            if post_req.status_code != 200:
-                print "Postcilog is not downloadable: %s" % g['log_url']
         postci = post_req.content or ""
         with gzip.open(os.path.join(path, name), "wb") as f:
             f.write(req.content + "\n" + postci)

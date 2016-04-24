@@ -22,6 +22,15 @@ len_re = re.compile("- (\d+[mhs])")
 
 VERBOSE = False
 
+PERIODIC = {
+    "periodic-tripleo-ci-f22-ha-liberty": "http://logs.openstack.org/periodic/periodic-tripleo-ci-f22-ha-liberty/",
+    "periodic-tripleo-ci-f22-ha-mitaka": "http://logs.openstack.org/periodic/periodic-tripleo-ci-f22-ha-mitaka/",
+    "periodic-tripleo-ci-f22-ha": "http://logs.openstack.org/periodic/periodic-tripleo-ci-f22-ha/",
+    "periodic-tripleo-ci-f22-nonha": "http://logs.openstack.org/periodic/periodic-tripleo-ci-f22-nonha/",
+    "periodic-tripleo-ci-f22-upgrades": "http://logs.openstack.org/periodic/periodic-tripleo-ci-f22-upgrades/",
+}
+
+
 PATTERNS = [
     {
         "pattern": "Stack overcloud CREATE_COMPLETE",
@@ -219,6 +228,60 @@ def parse_page(main_page):
     return data
 
 
+def get_periodic(path, days=None):
+    jobs = []
+    if days:
+        today = datetime.date.today()
+        dates = []
+        for i in xrange(days):
+            dates.append(datetime.date.strftime(today - datetime.timedelta(days=i), "%m-%d"))
+    for key, val in PERIODIC.iteritems():
+        req = requests.get(val)
+        if req.status_code == 200:
+            for job in periodic_parse(req.content):
+                if days and job['date'] not in dates:
+                    continue
+                job['build_url'] = None
+                job['log_url'] = val + job['log_hash'] + "/"
+                download(job, path)
+                job['color'] = get_color(path, job['log_hash'])
+                job['job_type'] = key
+                job['short_type'] = key.split("-")[-1]
+                jobs.append(job)
+    return jobs
+
+
+def periodic_parse(text):
+    et = etree.HTML(text)
+    trs = [i for i in et.xpath("//tr") if not i.xpath("th")][1:]
+    for tr in trs:
+        job = {}
+        td1, td2 = tr.xpath("td")[1:3]
+        lhash = td1.xpath("a")[0].attrib['href'].rstrip("/")
+        job["log_hash"] = lhash
+        d = datetime.datetime.strptime(td2.text.strip(), "%d-%b-%Y %H:%M")
+        job["date"] = d.strftime("%m-%d")
+        job["time"] = d.strftime("%H:%M")
+        yield job
+
+
+def get_color(path, job_hash):
+    file_path = os.path.join(path, job_hash) + ".html.gz"
+    for line in fileinput.input(file_path, openhook=fileinput.hook_compressed):
+        if "Finished: SUCCESS"  in line:
+            color = "green"
+            fileinput.close()
+            return color
+        elif "Finished: FAILURE"  in line:
+            color = "red"
+            fileinput.close()
+            return color
+    else:
+        return None
+
+
+
+
 def download(g, path):
     console = g['log_url'] + "console.html"
     name = g['log_hash'] + ".html.gz"
@@ -231,7 +294,9 @@ def download(g, path):
         if req.status_code == 404:
             new_url = console + ".gz"
             req = requests.get(new_url)
-            if req.status_code != 200:
+            if req.status_code != 200 and not g['build_url']:
+                return False
+            elif req.status_code != 200 and g['build_url']:
                 build_console = g['build_url'] + "/consoleText"
                 try:
                     req = requests.get(build_console, verify=False)
@@ -241,6 +306,7 @@ def download(g, path):
                 except ConnectionError:
                     print "Jenkins build page is unavailable"
                     return False
+
         postcilog = g['log_url'] + "/logs/postci.txt.gz"
         post_req = requests.get(postcilog)
         if post_req.status_code != 200:
@@ -379,7 +445,10 @@ def run(amount=10,
         excluded="containers",
         down_path=os.path.join(os.environ["HOME"], "tmp", "ci_status"),
         page="http://tripleo.org/cistatus.html"):
-    jobs = parse_page(page)
+    if "periodic" in page:
+        jobs = get_periodic(down_path, days)
+    else:
+        jobs = parse_page(page)
     for job in limit(jobs,
                      short=job_type,
                      number=amount,
@@ -408,12 +477,12 @@ def print_analysis(messages):
 
 def main():
     LOGS_DIR = os.path.join(os.environ["HOME"], "tmp", "ci_status")
-    #MAIN_PAGE = "http://tripleo.org/cistatus-periodic.html"
-    MAIN_PAGE = "http://tripleo.org/cistatus.html"
+    MAIN_PAGE = "http://tripleo.org/cistatus-periodic.html"
+    #MAIN_PAGE = "http://tripleo.org/cistatus.html"
     # How many jobs to print
-    LIMIT_JOBS = 5
+    LIMIT_JOBS = 20
     # How many days to include, None for all days, 1 - for today
-    DAYS = 2
+    DAYS = 3
     # Which kind of jobs to take? ha, nonha, upgrades, None - for all
     INTERESTED_JOB_TYPE = None  # or None for all (ha, nonha, upgrades, etc)
     EXCLUDED_JOB_TYPE = "containers"

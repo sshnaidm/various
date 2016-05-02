@@ -220,6 +220,28 @@ PATTERNS = {
             "tag": "infra",
         },
     ],
+
+    '/logs/postci.txt.gz': [
+        {
+            "pattern": puppet_re,
+            "msg": "Puppet {} FAIL.",
+            "tag": "code",
+        },
+    ],
+    '/logs/ps.txt.gz': [
+        {
+            "pattern": '/usr/sbin/ntpd -u ntp:ntp -g',
+            "msg": "Test FAIL.",
+            "tag": "code",
+        },
+    ],
+    '/logs/overcloud-controller-0.tar.xz//var/log/neutron/server.log': [
+        {
+            "pattern": 'Extension router-service-type not supported',
+            "msg": "Test2 FAIL.",
+            "tag": "code",
+        },
+    ]
 }
 
 
@@ -228,6 +250,8 @@ class SSH(object):
                  host, port, user, timeout=None, key=None, key_path=None):
         self.ssh_cl = paramiko.SSHClient()
         self.ssh_cl.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        log.debug("Executing ssh {user}@{host}:{port}".format(
+            user=user, host=host, port=port))
         self.ssh_cl.connect(hostname=host,
                             port=port,
                             username=user,
@@ -236,6 +260,7 @@ class SSH(object):
                             key_filename=key_path)
 
     def exe(self, cmd):
+        log.debug("Executing cmd by ssh: {cmd}".format(cmd=cmd))
         stdin, stdout, stderr = self.ssh_cl.exec_command(cmd)
         return stdin, stdout.read(), stderr.read()
 
@@ -457,6 +482,8 @@ class Web:
         self.url = url
 
     def get(self, ignore404=False):
+        log.debug("GET {url} with ignore404={i}".format(
+            url=self.url, i=str(ignore404)))
         req = requests.get(self.url)
         if req.status_code != 200:
             if not (ignore404 and req.status_code == 404):
@@ -500,7 +527,8 @@ class JobFile:
             return self.file_path
 
     def get_regular_file(self):
-        self.file_name = os.path.basename(self.file_link) + ".gz"
+        log.debug("Get regular file {}".format(self.file_link))
+        self.file_name = os.path.basename(self.file_link).rstrip(".gz") + ".gz"
         self.file_path = os.path.join(self.job_dir, self.file_name)
         if os.path.exists(self.file_path):
             return self.file_path
@@ -511,8 +539,10 @@ class JobFile:
             if req.status_code != 200 and self.file_link == "/console.html":
                 self.file_url += ".gz"
                 web = Web(url=self.file_url)
+                log.debug("Trying to download gzipped console")
                 req = web.get()
             if req.status_code != 200:
+                log.error("Failed to retrieve URL: {}".format(self.file_url))
                 return None
             else:
                 with gzip.open(self.file_path, "wb") as f:
@@ -532,6 +562,7 @@ class JobFile:
 
     def get_tarred_file(self):
         tar_file_link, intern_path = self.file_link.split("//")
+        log.debug("Get file {} from tar.gz archive {}".format(intern_path, tar_file_link))
         tar_base_name = os.path.basename(tar_file_link)
         tar_prefix = os.path.splitext(tar_base_name)[0]
         tar_root_dir = os.path.join(self.job_dir, tar_prefix)
@@ -622,12 +653,13 @@ def analysis(job, down_path):
              "{msg:60}\t"
              "{delim}\t"
              "log: {log_url}")
-    text = templ.format(msg=" ".join(sorted(msg)),
-                        delim="||" if found_reason else "XX",
-                        date=job.ts.strftime("%m-%d %H:%M"),
-                        job_type=job.name,
-                        log_url=job.log_url
-                        )
+    text = templ.format(
+        msg=" ".join(sorted(msg)),
+        delim="||" if found_reason else "XX",
+        date=job.ts.strftime("%m-%d %H:%M"),
+        job_type=job.name,
+        log_url=job.log_url
+    )
     message = {
         "text": text,
         "tags": tags,
@@ -676,7 +708,7 @@ def meow(days=None,
 
 
 def main():
-    for m in  meow():
+    for m in  meow(limit=2, dates=["04-19"]):
         print m["text"]
 
 

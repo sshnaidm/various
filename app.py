@@ -13,11 +13,16 @@ def main():
         return d
 
     work_dir = os.path.dirname(__file__)
-    ci_data = meow(limit=20,
-                  days=None,
-                  job_type=None,
-                  exclude="containers",
-                  down_path=os.path.join(os.environ["HOME"],"ci_status"))
+
+    local = False
+
+    if not local:
+        ci_data = meow(limit=10,
+                      days=None,
+                      job_type=None,
+                      exclude="containers",
+                      down_path=os.path.join(os.environ["HOME"],"ci_status"))
+
     # periodic_data = meow(amount=10,
     #                     days=0,
     #                     job_type=None,
@@ -25,6 +30,13 @@ def main():
     #                     down_path=os.path.join(os.environ["HOME"], "tmp",
     #                                            "ci_status"),
     #                     page="http://tripleo.org/cistatus-periodic.html")
+    import pickle
+    if not local:
+        with open("/tmp/ttt", "w") as g:
+            pickle.dump(ci_data, g)
+    else:
+        with open("/tmp/ttt", "rb") as g:
+            ci_data = pickle.load(g)
 
     JINJA_ENVIRONMENT = jinja2.Environment(
         loader=jinja2.FileSystemLoader(work_dir),

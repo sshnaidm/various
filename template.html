@@ -35,20 +35,43 @@
         <div id="{{ key }}" class="tab-pane fade{% if rowloop.first and loop.first%} in active{%  endif %}">
         <h3 style="align-content: center">{{ key }}</h3>
             <table class="table table-hover">
-            <thead><td>Date</td><td>Build</td><td>Patch</td><td>Logs</td><td>Reason</td></thead>
+            <thead><td>Date</td><td>Reason</td><td>Patch</td><td>Logs</td><td>Project</td><td>Branch</td><td>Build</td></thead>
             {%  for i in data[key] %}
                 <tr style="color:{% if i.reason and 'infra' in i.tags %}red{% elif i.reason %}blue{% else %}black{% endif %}">
+                    {# Date #}
                     <td style="color:{% if i.reason and 'infra' in i.tags %}red{% elif i.reason %}blue{% else %}black{% endif %}">
-                    | {{  i.job.date }}-{{ i.job.time }} |
-                    </td><td style="color:{% if i.reason and 'infra' in i.tags %}red{% elif i.reason %}blue{% else %}black{% endif %}">
-                    {#  {{ i.job.job_type }} |  #}
+                    | {{  i.job.datetime }} |
+                    </td>
+                    {# Reason #}
+                    <td style="color:{% if i.reason and 'infra' in i.tags %}red{% elif i.reason %}blue{% else %}black{% endif %}">
                     | {{ i.msg | join(' ')}} |
                     </td>
+                    {# Patchset #}
+                    {% if not i.periodic %}
                     <td>
-                    | <a href="{{ i.job.build_url }}">Jenkins</a> |
-                    </td><td>
-                    {% if not i.periodic %}| {%  if i.patch_url %}<a href="{{ i.patch_url }}">Patch</a>{%  else %}No patch URL{%  endif %} |</td><td>{% endif %}
+                        | {%  if i.job.patchset.patchset_url %}
+                            <a data-toggle="tooltip" data-placement="top" title="{{ i.job.patch.subject }}"
+                               href="{{ i.job.patchset.patchset_url }}">{{ i.job.patch.patch_number }},{{ i.job.patchset.number }}</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: {{ i.job.patch.subject }}" data-content="Author: {{ i.job.patch.owner.name }}<br>Commit:<br> {{ i.job.patch.commitmsg.split("Change-Id")[0] }}"><strong>?</strong></a>
+                        {%  else %}No patch URL{%  endif %} |
+                    </td>
+                    {% endif %}
+                    {# Logs #}
+                    <td>
                     | <a href="{{ i.job.log_url }}">Logs</a> |
+                    </td>
+                    {# Project #}
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:{{ i.job.patch.project }}">{{ i.job.patch.project.split("/")[1]|default(i.job.patch.project) }}</a> |
+                    </td>
+                    {# Branch #}
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="{{ i.job.patch.topic|default('') }}" href="https://review.openstack.org/#/q/status:open+branch:{{ i.job.patch.branch }}+project:{{ i.job.patch.project }}">{{ i.job.patch.branch }}</a> |
+                    </td>
+                    {# Build #}
+                    <td>
+                    | {% if  i.job.build_url %}<a href="{{ i.job.build_url }}">Jenkins</a>{% else %}No URL{% endif %} |
                     </td>
                 </tr>
             {%  endfor %}
@@ -64,6 +87,12 @@ $('#all').on('click',function(){
   $('#all').parent().addClass('active');
   $('.tab-pane').addClass('active in');
   $('[data-toggle="tab"]').parent().removeClass('active');
+});
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip();
+});
+$(function () {
+  $('[data-toggle="popover"]').popover();
 });
 </script>
 </body>

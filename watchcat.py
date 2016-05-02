@@ -304,7 +304,7 @@ class Patch(object):
         self.commitmsg = data['commitMessage']
         self.created = datetime.datetime.fromtimestamp(data['createdOn'])
         self.lastup = datetime.datetime.fromtimestamp(data['lastUpdated'])
-        self.patch_umber = data['number']
+        self.patch_number = data['number']
         self.gid = data['id']
         self.owner = data['owner']
         self.sets = [Patchset(i, data) for i in data['patchSets']]
@@ -371,6 +371,7 @@ class Job(object):
         self.patch = patch
         self.patchset = patchset
         self.ts = timestamp
+        self.datetime = self.ts.strftime("%m-%d %H:%M")
         self.log_hash = self.hashed(self.log_url)
 
     def hashed(self, url):
@@ -626,7 +627,7 @@ def analysis(job, down_path):
         if not jfile:
             log.error("File {} is not downloaded, "
                       "skipping its patterns".format(file))
-            break
+            continue
         else:
             try:
                 log.debug("Opening file for scan: {}".format(jfile))
@@ -638,16 +639,17 @@ def analysis(job, down_path):
                             msg.add(p["msg"].format(
                                 line_match(p["pattern"], line)))
                             tags.add(p["tag"])
-                if not msg:
-                    log.debug("No patterns in file {}".format(jfile))
-                    msg = {"Reason was NOT FOUND. Please investigate"}
-                    found_reason = False
-                    tags.add("unknown")
+
             except Exception as e:
                 log.error("Exception when parsing {}: {}".format(jfile, str(e)))
                 msg = {"Error when parsing logs. Please investigate"}
                 found_reason = False
                 tags.add("unknown")
+    if not msg:
+        log.debug("No patterns in job files {}".format(job))
+        msg = {"Reason was NOT FOUND. Please investigate"}
+        found_reason = False
+        tags.add("unknown")
     templ = ("{date}\t"
              "{job_type:38}\t"
              "{delim}\t"
@@ -657,7 +659,7 @@ def analysis(job, down_path):
     text = templ.format(
         msg=" ".join(sorted(msg)),
         delim="||" if found_reason else "XX",
-        date=job.ts.strftime("%m-%d %H:%M"),
+        date=job.datetime,
         job_type=job.name,
         log_url=job.log_url
     )
@@ -680,13 +682,17 @@ def meow(days=None,
          exclude=None,
          job_type=None,
          down_path=DOWNLOAD_PATH,
+         debug_file_res=True
          ):
-    g = Gerrit()
-    gerrit = g.get_project_patches(['openstack/tripleo-common'])
-    with open("/tmp/gerrit", "w") as f:
-        #gerrit = json.loads(f.read())
-        s = json.dumps(gerrit)
-        f.write(s)
+    if not debug_file_res:
+        g = Gerrit()
+        gerrit = g.get_project_patches(['openstack/tripleo-common'])
+        with open("/tmp/gerrit", "w") as f:
+            s = json.dumps(gerrit)
+            f.write(s)
+    else:
+        with open("/tmp/gerrit", "r") as f:
+            gerrit = json.loads(f.read())
     jobs = (job for patch in gerrit for job in Patch(patch).jobs)
     f = Filter(
         jobs,
@@ -709,7 +715,7 @@ def meow(days=None,
 
 
 def main():
-    for m in  meow(limit=2, dates=["04-19"]):
+    for m in  meow(limit=10, dates=["04-30"]):
         print m["text"]
 
 

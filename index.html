@@ -43,80 +43,603 @@
         <div id="gate-tripleo-ci-f22-ha" class="tab-pane fade in active">
         <h3 style="align-content: center">gate-tripleo-ci-f22-ha</h3>
             <table class="table table-hover">
-            <thead><td>Date</td><td>Build</td><td>Patch</td><td>Logs</td><td>Reason</td></thead>
+            <thead><td>Date</td><td>Reason</td><td>Patch</td><td>Logs</td><td>Project</td><td>Branch</td><td>Build</td></thead>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 05-02 17:43 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Log diskimage-builder output to a file"
+                               href="https://review.openstack.org/#/c/311756/1">311756,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Log diskimage-builder output to a file" data-content="Author: John Trowbridge<br>Commit:<br> Log diskimage-builder output to a file
+
+Currently the diskimage-builder output goes directly to
+stdout/stderr. This is not good behavior for a library.
+
+This patch changes that behavior to write this output to
+a log file. (image_path/image_name.log)
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/56/311756/1/check-tripleo/gate-tripleo-ci-f22-ha/745efad/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="bug/1577374" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 05-02 12:03 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Updated from global requirements"
+                               href="https://review.openstack.org/#/c/311357/1">311357,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Updated from global requirements" data-content="Author: OpenStack Proposal Bot<br>Commit:<br> Updated from global requirements
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/57/311357/1/check-tripleo/gate-tripleo-ci-f22-ha/4f7fc02/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="openstack/requirements" href="https://review.openstack.org/#/q/status:open+branch:stable/mitaka+project:openstack/tripleo-common">stable/mitaka</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 05-02 12:03 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Import initial_state logic from tripleoclient"
+                               href="https://review.openstack.org/#/c/309521/3">309521,3</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Import initial_state logic from tripleoclient" data-content="Author: Miles Gould<br>Commit:<br> Import initial_state logic from tripleoclient
+
+Ironic API v1.11 introduced a new ENROLL state for newly-registered
+baremetal nodes. Logic to allow the user to specify which initial state
+to use (either ENROLL or the older AVAILABLE) was previously in
+python-tripleoclient; this patch moves it into this repo, along with
+supporting utility functions and tests.
+
+Specifically, we
+
+ - add a `provide` keyword argument to utils.nodes.register_all_nodes;
+   when set to True, newly-registered nodes should be transitioned to
+   the AVAILABLE state;
+ - import the utility functions wait_for_provision_state and
+   set_nodes_state from python-tripleoclient;
+ - change set_nodes_state to return a list of node objects rather than
+   generating a sequence of UUIDs. This makes its results more useful to
+   client code.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/21/309521/3/check-tripleo/gate-tripleo-ci-f22-ha/0a42971/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="refactor_enroll" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 05-02 11:10 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="overcloud-odl : add new image file definition"
+                               href="https://review.openstack.org/#/c/266881/9">266881,9</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: overcloud-odl : add new image file definition" data-content="Author: Oded Shvartz<br>Commit:<br> overcloud-odl : add new image file definition
+
+Add new yaml file for creating the overcloud-odl
+image with openstack-tripleo project.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/81/266881/9/check-tripleo/gate-tripleo-ci-f22-ha/20c35ec/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="bug/1567408" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 04-30 01:56 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Updated from global requirements"
+                               href="https://review.openstack.org/#/c/311357/1">311357,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Updated from global requirements" data-content="Author: OpenStack Proposal Bot<br>Commit:<br> Updated from global requirements
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/57/311357/1/check-tripleo/gate-tripleo-ci-f22-ha/2f1617b/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="openstack/requirements" href="https://review.openstack.org/#/q/status:open+branch:stable/mitaka+project:openstack/tripleo-common">stable/mitaka</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 04-30 00:17 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Initial Integration of Mistral into TripleO"
+                               href="https://review.openstack.org/#/c/282366/15">282366,15</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Initial Integration of Mistral into TripleO" data-content="Author: Ryan Brady<br>Commit:<br> Initial Integration of Mistral into TripleO
+
+This patch includes the base elements needed for integrating Mistral
+and TripleO.  For a development workflow, clone the source code and
+use the following steps:
+
+ * Create additional actions in the /actions directory
+ * Add an entry point in the setup.cfg file [entry_points]
+ * Run scripts/deploy.sh to remove and reinstall tripleo_common and
+   import the Actions into Mistral
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/66/282366/15/check-tripleo/gate-tripleo-ci-f22-ha/262d9d8/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="ryan" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:48 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Adds Deployment Action &amp; Workflow"
+                               href="https://review.openstack.org/#/c/298732/2">298732,2</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Adds Deployment Action &amp; Workflow" data-content="Author: Ryan Brady<br>Commit:<br> Adds Deployment Action &amp; Workflow
+
+This patch adds the workflow necessary to deploy a stack and the
+supporting action required.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/32/298732/2/check-tripleo/gate-tripleo-ci-f22-ha/162aa23/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:45 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Add Heat Capabilities Actions"
+                               href="https://review.openstack.org/#/c/284460/6">284460,6</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Add Heat Capabilities Actions" data-content="Author: Ryan Brady<br>Commit:<br> Add Heat Capabilities Actions
+
+This patch adds the Actions for retrieving and updating the capabilites
+for a given deployment.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/60/284460/6/check-tripleo/gate-tripleo-ci-f22-ha/d0398ca/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:43 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Add Plan Deletion"
+                               href="https://review.openstack.org/#/c/299937/3">299937,3</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Add Plan Deletion" data-content="Author: Ryan Brady<br>Commit:<br> Add Plan Deletion
+
+This patch adds a mistral action that deletes a plan by deleting
+the swift container and mistral environment matching a given container
+name. It will not delete the plan if a stack exists with the same name.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/37/299937/3/check-tripleo/gate-tripleo-ci-f22-ha/5102b69/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:39 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Adds Plan List Action"
+                               href="https://review.openstack.org/#/c/300221/3">300221,3</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Adds Plan List Action" data-content="Author: Ryan Brady<br>Commit:<br> Adds Plan List Action
+
+This patch adds a mistral action for retrieving a list of tripleo
+deployment plans.  A tripleo deployment plan consists of a container
+and a mistral environment with the same name.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/21/300221/3/check-tripleo/gate-tripleo-ci-f22-ha/d1e28ff/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 19:29 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="StackAction parameter to distinguish top-level create vs. update"
+                               href="https://review.openstack.org/#/c/306392/1">306392,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: StackAction parameter to distinguish top-level create vs. update" data-content="Author: Jiri Stransky<br>Commit:<br> StackAction parameter to distinguish top-level create vs. update
+
+Previously we tried to use UpdateIdentifier for two different things:
+tell whether to perform package update, and also to tell whether the
+top-level stack is being created or updated (which was incorrect and
+resulted in bug 1567384, and an attempt to work around that bug resulted
+in bug 1567385).
+
+We cannot use Heat&#39;s &#34;action&#34; conditionals in some cases, because they
+refer to the direct parent stack, which can yield undesirable results
+when introducing new nested stacks or temporarily no-opping something
+and then adding it back (in both these cases, &#34;action&#34; would be
+considered &#34;CREATE&#34;, even though the top-level stack is in &#34;UPDATE&#34;).
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/92/306392/1/check-tripleo/gate-tripleo-ci-f22-ha/ab6d058/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="bug/1567384" href="https://review.openstack.org/#/q/status:open+branch:stable/mitaka+project:openstack/tripleo-common">stable/mitaka</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 03:22 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="WIP pseudo code of heat deployment action"
+                               href="https://review.openstack.org/#/c/310966/1">310966,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: WIP pseudo code of heat deployment action" data-content="Author: Steve Baker<br>Commit:<br> WIP pseudo code of heat deployment action
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/66/310966/1/check-tripleo/gate-tripleo-ci-f22-ha/06b10af/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="heat-deployment-action" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-28 19:30 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    | Puppet Keystone FAIL. Overcloud stack: FAILED. Testing pattern, please ignore. |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Import initial_state logic from tripleoclient"
+                               href="https://review.openstack.org/#/c/309521/3">309521,3</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Import initial_state logic from tripleoclient" data-content="Author: Miles Gould<br>Commit:<br> Import initial_state logic from tripleoclient
+
+Ironic API v1.11 introduced a new ENROLL state for newly-registered
+baremetal nodes. Logic to allow the user to specify which initial state
+to use (either ENROLL or the older AVAILABLE) was previously in
+python-tripleoclient; this patch moves it into this repo, along with
+supporting utility functions and tests.
+
+Specifically, we
+
+ - add a `provide` keyword argument to utils.nodes.register_all_nodes;
+   when set to True, newly-registered nodes should be transitioned to
+   the AVAILABLE state;
+ - import the utility functions wait_for_provision_state and
+   set_nodes_state from python-tripleoclient;
+ - change set_nodes_state to return a list of node objects rather than
+   generating a sequence of UUIDs. This makes its results more useful to
+   client code.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/21/309521/3/check-tripleo/gate-tripleo-ci-f22-ha/6b76355/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="refactor_enroll" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
                     </td>
                 </tr>
             
@@ -126,80 +649,546 @@
         <div id="gate-tripleo-ci-f22-nonha" class="tab-pane fade">
         <h3 style="align-content: center">gate-tripleo-ci-f22-nonha</h3>
             <table class="table table-hover">
-            <thead><td>Date</td><td>Build</td><td>Patch</td><td>Logs</td><td>Reason</td></thead>
+            <thead><td>Date</td><td>Reason</td><td>Patch</td><td>Logs</td><td>Project</td><td>Branch</td><td>Build</td></thead>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 05-02 17:43 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Log diskimage-builder output to a file"
+                               href="https://review.openstack.org/#/c/311756/1">311756,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Log diskimage-builder output to a file" data-content="Author: John Trowbridge<br>Commit:<br> Log diskimage-builder output to a file
+
+Currently the diskimage-builder output goes directly to
+stdout/stderr. This is not good behavior for a library.
+
+This patch changes that behavior to write this output to
+a log file. (image_path/image_name.log)
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/56/311756/1/check-tripleo/gate-tripleo-ci-f22-nonha/c079d07/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="bug/1577374" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 05-02 12:03 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Updated from global requirements"
+                               href="https://review.openstack.org/#/c/311357/1">311357,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Updated from global requirements" data-content="Author: OpenStack Proposal Bot<br>Commit:<br> Updated from global requirements
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/57/311357/1/check-tripleo/gate-tripleo-ci-f22-nonha/ddd9dba/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="openstack/requirements" href="https://review.openstack.org/#/q/status:open+branch:stable/mitaka+project:openstack/tripleo-common">stable/mitaka</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 05-02 12:03 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Import initial_state logic from tripleoclient"
+                               href="https://review.openstack.org/#/c/309521/3">309521,3</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Import initial_state logic from tripleoclient" data-content="Author: Miles Gould<br>Commit:<br> Import initial_state logic from tripleoclient
+
+Ironic API v1.11 introduced a new ENROLL state for newly-registered
+baremetal nodes. Logic to allow the user to specify which initial state
+to use (either ENROLL or the older AVAILABLE) was previously in
+python-tripleoclient; this patch moves it into this repo, along with
+supporting utility functions and tests.
+
+Specifically, we
+
+ - add a `provide` keyword argument to utils.nodes.register_all_nodes;
+   when set to True, newly-registered nodes should be transitioned to
+   the AVAILABLE state;
+ - import the utility functions wait_for_provision_state and
+   set_nodes_state from python-tripleoclient;
+ - change set_nodes_state to return a list of node objects rather than
+   generating a sequence of UUIDs. This makes its results more useful to
+   client code.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/21/309521/3/check-tripleo/gate-tripleo-ci-f22-nonha/48e2269/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="refactor_enroll" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 05-02 11:10 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="overcloud-odl : add new image file definition"
+                               href="https://review.openstack.org/#/c/266881/9">266881,9</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: overcloud-odl : add new image file definition" data-content="Author: Oded Shvartz<br>Commit:<br> overcloud-odl : add new image file definition
+
+Add new yaml file for creating the overcloud-odl
+image with openstack-tripleo project.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/81/266881/9/check-tripleo/gate-tripleo-ci-f22-nonha/ad715a5/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="bug/1567408" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 04-30 01:56 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Updated from global requirements"
+                               href="https://review.openstack.org/#/c/311357/1">311357,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Updated from global requirements" data-content="Author: OpenStack Proposal Bot<br>Commit:<br> Updated from global requirements
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/57/311357/1/check-tripleo/gate-tripleo-ci-f22-nonha/f119ffe/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="openstack/requirements" href="https://review.openstack.org/#/q/status:open+branch:stable/mitaka+project:openstack/tripleo-common">stable/mitaka</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 04-30 00:17 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Initial Integration of Mistral into TripleO"
+                               href="https://review.openstack.org/#/c/282366/15">282366,15</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Initial Integration of Mistral into TripleO" data-content="Author: Ryan Brady<br>Commit:<br> Initial Integration of Mistral into TripleO
+
+This patch includes the base elements needed for integrating Mistral
+and TripleO.  For a development workflow, clone the source code and
+use the following steps:
+
+ * Create additional actions in the /actions directory
+ * Add an entry point in the setup.cfg file [entry_points]
+ * Run scripts/deploy.sh to remove and reinstall tripleo_common and
+   import the Actions into Mistral
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/66/282366/15/check-tripleo/gate-tripleo-ci-f22-nonha/1a661df/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="ryan" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:48 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Adds Deployment Action &amp; Workflow"
+                               href="https://review.openstack.org/#/c/298732/2">298732,2</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Adds Deployment Action &amp; Workflow" data-content="Author: Ryan Brady<br>Commit:<br> Adds Deployment Action &amp; Workflow
+
+This patch adds the workflow necessary to deploy a stack and the
+supporting action required.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/32/298732/2/check-tripleo/gate-tripleo-ci-f22-nonha/ff08b48/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:45 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Add Heat Capabilities Actions"
+                               href="https://review.openstack.org/#/c/284460/6">284460,6</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Add Heat Capabilities Actions" data-content="Author: Ryan Brady<br>Commit:<br> Add Heat Capabilities Actions
+
+This patch adds the Actions for retrieving and updating the capabilites
+for a given deployment.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/60/284460/6/check-tripleo/gate-tripleo-ci-f22-nonha/2026f0a/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:43 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Add Plan Deletion"
+                               href="https://review.openstack.org/#/c/299937/3">299937,3</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Add Plan Deletion" data-content="Author: Ryan Brady<br>Commit:<br> Add Plan Deletion
+
+This patch adds a mistral action that deletes a plan by deleting
+the swift container and mistral environment matching a given container
+name. It will not delete the plan if a stack exists with the same name.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/37/299937/3/check-tripleo/gate-tripleo-ci-f22-nonha/3272ca6/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:39 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Adds Plan List Action"
+                               href="https://review.openstack.org/#/c/300221/3">300221,3</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Adds Plan List Action" data-content="Author: Ryan Brady<br>Commit:<br> Adds Plan List Action
+
+This patch adds a mistral action for retrieving a list of tripleo
+deployment plans.  A tripleo deployment plan consists of a container
+and a mistral environment with the same name.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/21/300221/3/check-tripleo/gate-tripleo-ci-f22-nonha/24e458d/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 19:29 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="StackAction parameter to distinguish top-level create vs. update"
+                               href="https://review.openstack.org/#/c/306392/1">306392,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: StackAction parameter to distinguish top-level create vs. update" data-content="Author: Jiri Stransky<br>Commit:<br> StackAction parameter to distinguish top-level create vs. update
+
+Previously we tried to use UpdateIdentifier for two different things:
+tell whether to perform package update, and also to tell whether the
+top-level stack is being created or updated (which was incorrect and
+resulted in bug 1567384, and an attempt to work around that bug resulted
+in bug 1567385).
+
+We cannot use Heat&#39;s &#34;action&#34; conditionals in some cases, because they
+refer to the direct parent stack, which can yield undesirable results
+when introducing new nested stacks or temporarily no-opping something
+and then adding it back (in both these cases, &#34;action&#34; would be
+considered &#34;CREATE&#34;, even though the top-level stack is in &#34;UPDATE&#34;).
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/92/306392/1/check-tripleo/gate-tripleo-ci-f22-nonha/acff673/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="bug/1567384" href="https://review.openstack.org/#/q/status:open+branch:stable/mitaka+project:openstack/tripleo-common">stable/mitaka</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 03:22 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="WIP pseudo code of heat deployment action"
+                               href="https://review.openstack.org/#/c/310966/1">310966,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: WIP pseudo code of heat deployment action" data-content="Author: Steve Baker<br>Commit:<br> WIP pseudo code of heat deployment action
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/66/310966/1/check-tripleo/gate-tripleo-ci-f22-nonha/9ac0aa5/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="heat-deployment-action" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
                     </td>
                 </tr>
             
@@ -209,80 +1198,595 @@
         <div id="gate-tripleo-ci-f22-containers" class="tab-pane fade">
         <h3 style="align-content: center">gate-tripleo-ci-f22-containers</h3>
             <table class="table table-hover">
-            <thead><td>Date</td><td>Build</td><td>Patch</td><td>Logs</td><td>Reason</td></thead>
+            <thead><td>Date</td><td>Reason</td><td>Patch</td><td>Logs</td><td>Project</td><td>Branch</td><td>Build</td></thead>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 05-02 17:43 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Log diskimage-builder output to a file"
+                               href="https://review.openstack.org/#/c/311756/1">311756,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Log diskimage-builder output to a file" data-content="Author: John Trowbridge<br>Commit:<br> Log diskimage-builder output to a file
+
+Currently the diskimage-builder output goes directly to
+stdout/stderr. This is not good behavior for a library.
+
+This patch changes that behavior to write this output to
+a log file. (image_path/image_name.log)
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/56/311756/1/check-tripleo/gate-tripleo-ci-f22-containers/dca28ff/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="bug/1577374" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 05-02 12:03 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Updated from global requirements"
+                               href="https://review.openstack.org/#/c/311357/1">311357,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Updated from global requirements" data-content="Author: OpenStack Proposal Bot<br>Commit:<br> Updated from global requirements
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/57/311357/1/check-tripleo/gate-tripleo-ci-f22-containers/270019e/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="openstack/requirements" href="https://review.openstack.org/#/q/status:open+branch:stable/mitaka+project:openstack/tripleo-common">stable/mitaka</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 05-02 12:03 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Import initial_state logic from tripleoclient"
+                               href="https://review.openstack.org/#/c/309521/3">309521,3</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Import initial_state logic from tripleoclient" data-content="Author: Miles Gould<br>Commit:<br> Import initial_state logic from tripleoclient
+
+Ironic API v1.11 introduced a new ENROLL state for newly-registered
+baremetal nodes. Logic to allow the user to specify which initial state
+to use (either ENROLL or the older AVAILABLE) was previously in
+python-tripleoclient; this patch moves it into this repo, along with
+supporting utility functions and tests.
+
+Specifically, we
+
+ - add a `provide` keyword argument to utils.nodes.register_all_nodes;
+   when set to True, newly-registered nodes should be transitioned to
+   the AVAILABLE state;
+ - import the utility functions wait_for_provision_state and
+   set_nodes_state from python-tripleoclient;
+ - change set_nodes_state to return a list of node objects rather than
+   generating a sequence of UUIDs. This makes its results more useful to
+   client code.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/21/309521/3/check-tripleo/gate-tripleo-ci-f22-containers/e2bca51/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="refactor_enroll" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 05-02 11:10 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="overcloud-odl : add new image file definition"
+                               href="https://review.openstack.org/#/c/266881/9">266881,9</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: overcloud-odl : add new image file definition" data-content="Author: Oded Shvartz<br>Commit:<br> overcloud-odl : add new image file definition
+
+Add new yaml file for creating the overcloud-odl
+image with openstack-tripleo project.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/81/266881/9/check-tripleo/gate-tripleo-ci-f22-containers/f248274/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="bug/1567408" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 04-30 01:56 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Updated from global requirements"
+                               href="https://review.openstack.org/#/c/311357/1">311357,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Updated from global requirements" data-content="Author: OpenStack Proposal Bot<br>Commit:<br> Updated from global requirements
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/57/311357/1/check-tripleo/gate-tripleo-ci-f22-containers/38a5a72/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="openstack/requirements" href="https://review.openstack.org/#/q/status:open+branch:stable/mitaka+project:openstack/tripleo-common">stable/mitaka</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 04-30 00:17 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Initial Integration of Mistral into TripleO"
+                               href="https://review.openstack.org/#/c/282366/15">282366,15</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Initial Integration of Mistral into TripleO" data-content="Author: Ryan Brady<br>Commit:<br> Initial Integration of Mistral into TripleO
+
+This patch includes the base elements needed for integrating Mistral
+and TripleO.  For a development workflow, clone the source code and
+use the following steps:
+
+ * Create additional actions in the /actions directory
+ * Add an entry point in the setup.cfg file [entry_points]
+ * Run scripts/deploy.sh to remove and reinstall tripleo_common and
+   import the Actions into Mistral
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/66/282366/15/check-tripleo/gate-tripleo-ci-f22-containers/df79cf0/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="ryan" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:48 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Adds Deployment Action &amp; Workflow"
+                               href="https://review.openstack.org/#/c/298732/2">298732,2</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Adds Deployment Action &amp; Workflow" data-content="Author: Ryan Brady<br>Commit:<br> Adds Deployment Action &amp; Workflow
+
+This patch adds the workflow necessary to deploy a stack and the
+supporting action required.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/32/298732/2/check-tripleo/gate-tripleo-ci-f22-containers/7631690/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:45 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Add Heat Capabilities Actions"
+                               href="https://review.openstack.org/#/c/284460/6">284460,6</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Add Heat Capabilities Actions" data-content="Author: Ryan Brady<br>Commit:<br> Add Heat Capabilities Actions
+
+This patch adds the Actions for retrieving and updating the capabilites
+for a given deployment.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/60/284460/6/check-tripleo/gate-tripleo-ci-f22-containers/bba09c7/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:43 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Add Plan Deletion"
+                               href="https://review.openstack.org/#/c/299937/3">299937,3</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Add Plan Deletion" data-content="Author: Ryan Brady<br>Commit:<br> Add Plan Deletion
+
+This patch adds a mistral action that deletes a plan by deleting
+the swift container and mistral environment matching a given container
+name. It will not delete the plan if a stack exists with the same name.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/37/299937/3/check-tripleo/gate-tripleo-ci-f22-containers/d9d269a/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:39 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Adds Plan List Action"
+                               href="https://review.openstack.org/#/c/300221/3">300221,3</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Adds Plan List Action" data-content="Author: Ryan Brady<br>Commit:<br> Adds Plan List Action
+
+This patch adds a mistral action for retrieving a list of tripleo
+deployment plans.  A tripleo deployment plan consists of a container
+and a mistral environment with the same name.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/21/300221/3/check-tripleo/gate-tripleo-ci-f22-containers/fa42e5c/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 19:29 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="StackAction parameter to distinguish top-level create vs. update"
+                               href="https://review.openstack.org/#/c/306392/1">306392,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: StackAction parameter to distinguish top-level create vs. update" data-content="Author: Jiri Stransky<br>Commit:<br> StackAction parameter to distinguish top-level create vs. update
+
+Previously we tried to use UpdateIdentifier for two different things:
+tell whether to perform package update, and also to tell whether the
+top-level stack is being created or updated (which was incorrect and
+resulted in bug 1567384, and an attempt to work around that bug resulted
+in bug 1567385).
+
+We cannot use Heat&#39;s &#34;action&#34; conditionals in some cases, because they
+refer to the direct parent stack, which can yield undesirable results
+when introducing new nested stacks or temporarily no-opping something
+and then adding it back (in both these cases, &#34;action&#34; would be
+considered &#34;CREATE&#34;, even though the top-level stack is in &#34;UPDATE&#34;).
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/92/306392/1/check-tripleo/gate-tripleo-ci-f22-containers/3ae8175/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="bug/1567384" href="https://review.openstack.org/#/q/status:open+branch:stable/mitaka+project:openstack/tripleo-common">stable/mitaka</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 03:22 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="WIP pseudo code of heat deployment action"
+                               href="https://review.openstack.org/#/c/310966/1">310966,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: WIP pseudo code of heat deployment action" data-content="Author: Steve Baker<br>Commit:<br> WIP pseudo code of heat deployment action
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/66/310966/1/check-tripleo/gate-tripleo-ci-f22-containers/95cd903/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="heat-deployment-action" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-28 23:49 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Initial Integration of Mistral into TripleO"
+                               href="https://review.openstack.org/#/c/282366/14">282366,14</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Initial Integration of Mistral into TripleO" data-content="Author: Ryan Brady<br>Commit:<br> Initial Integration of Mistral into TripleO
+
+This patch includes the base elements needed for integrating Mistral
+and TripleO.  For a development workflow, clone the source code and
+use the following steps:
+
+ * Create additional actions in the /actions directory
+ * Add an entry point in the setup.cfg file [entry_points]
+ * Run scripts/deploy.sh to remove and reinstall tripleo_common and
+   import the Actions into Mistral
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/66/282366/14/check-tripleo/gate-tripleo-ci-f22-containers/4348f97/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="ryan" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
                     </td>
                 </tr>
             
@@ -292,80 +1796,546 @@
         <div id="gate-tripleo-ci-f22-upgrades" class="tab-pane fade">
         <h3 style="align-content: center">gate-tripleo-ci-f22-upgrades</h3>
             <table class="table table-hover">
-            <thead><td>Date</td><td>Build</td><td>Patch</td><td>Logs</td><td>Reason</td></thead>
+            <thead><td>Date</td><td>Reason</td><td>Patch</td><td>Logs</td><td>Project</td><td>Branch</td><td>Build</td></thead>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 05-02 17:43 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Log diskimage-builder output to a file"
+                               href="https://review.openstack.org/#/c/311756/1">311756,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Log diskimage-builder output to a file" data-content="Author: John Trowbridge<br>Commit:<br> Log diskimage-builder output to a file
+
+Currently the diskimage-builder output goes directly to
+stdout/stderr. This is not good behavior for a library.
+
+This patch changes that behavior to write this output to
+a log file. (image_path/image_name.log)
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/56/311756/1/check-tripleo/gate-tripleo-ci-f22-upgrades/411d0b4/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="bug/1577374" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 05-02 12:03 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Updated from global requirements"
+                               href="https://review.openstack.org/#/c/311357/1">311357,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Updated from global requirements" data-content="Author: OpenStack Proposal Bot<br>Commit:<br> Updated from global requirements
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/57/311357/1/check-tripleo/gate-tripleo-ci-f22-upgrades/f9827d1/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="openstack/requirements" href="https://review.openstack.org/#/q/status:open+branch:stable/mitaka+project:openstack/tripleo-common">stable/mitaka</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 05-02 12:03 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Import initial_state logic from tripleoclient"
+                               href="https://review.openstack.org/#/c/309521/3">309521,3</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Import initial_state logic from tripleoclient" data-content="Author: Miles Gould<br>Commit:<br> Import initial_state logic from tripleoclient
+
+Ironic API v1.11 introduced a new ENROLL state for newly-registered
+baremetal nodes. Logic to allow the user to specify which initial state
+to use (either ENROLL or the older AVAILABLE) was previously in
+python-tripleoclient; this patch moves it into this repo, along with
+supporting utility functions and tests.
+
+Specifically, we
+
+ - add a `provide` keyword argument to utils.nodes.register_all_nodes;
+   when set to True, newly-registered nodes should be transitioned to
+   the AVAILABLE state;
+ - import the utility functions wait_for_provision_state and
+   set_nodes_state from python-tripleoclient;
+ - change set_nodes_state to return a list of node objects rather than
+   generating a sequence of UUIDs. This makes its results more useful to
+   client code.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/21/309521/3/check-tripleo/gate-tripleo-ci-f22-upgrades/f6951a5/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="refactor_enroll" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 05-02 11:10 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="overcloud-odl : add new image file definition"
+                               href="https://review.openstack.org/#/c/266881/9">266881,9</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: overcloud-odl : add new image file definition" data-content="Author: Oded Shvartz<br>Commit:<br> overcloud-odl : add new image file definition
+
+Add new yaml file for creating the overcloud-odl
+image with openstack-tripleo project.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/81/266881/9/check-tripleo/gate-tripleo-ci-f22-upgrades/6a177cd/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="bug/1567408" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 04-30 01:56 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Updated from global requirements"
+                               href="https://review.openstack.org/#/c/311357/1">311357,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Updated from global requirements" data-content="Author: OpenStack Proposal Bot<br>Commit:<br> Updated from global requirements
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/57/311357/1/check-tripleo/gate-tripleo-ci-f22-upgrades/29340a7/">Logs</a> |
                     </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="openstack/requirements" href="https://review.openstack.org/#/q/status:open+branch:stable/mitaka+project:openstack/tripleo-common">stable/mitaka</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
                 </tr>
             
-                <tr style="color:red">
-                    <td style="color:red">
-                    | - |
-                    </td><td style="color:red">
+                <tr style="color:blue">
                     
-                    | Failed to build dep cryptography cffi. |
+                    <td style="color:blue">
+                    | 04-30 00:17 |
                     </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
                     <td>
-                    | <a href="">Jenkins</a> |
-                    </td><td>
-                    | No patch URL |</td><td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Initial Integration of Mistral into TripleO"
+                               href="https://review.openstack.org/#/c/282366/15">282366,15</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Initial Integration of Mistral into TripleO" data-content="Author: Ryan Brady<br>Commit:<br> Initial Integration of Mistral into TripleO
+
+This patch includes the base elements needed for integrating Mistral
+and TripleO.  For a development workflow, clone the source code and
+use the following steps:
+
+ * Create additional actions in the /actions directory
+ * Add an entry point in the setup.cfg file [entry_points]
+ * Run scripts/deploy.sh to remove and reinstall tripleo_common and
+   import the Actions into Mistral
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
                     | <a href="http://logs.openstack.org/66/282366/15/check-tripleo/gate-tripleo-ci-f22-upgrades/35e081f/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="ryan" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:48 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Adds Deployment Action &amp; Workflow"
+                               href="https://review.openstack.org/#/c/298732/2">298732,2</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Adds Deployment Action &amp; Workflow" data-content="Author: Ryan Brady<br>Commit:<br> Adds Deployment Action &amp; Workflow
+
+This patch adds the workflow necessary to deploy a stack and the
+supporting action required.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/32/298732/2/check-tripleo/gate-tripleo-ci-f22-upgrades/d80e928/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:45 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Add Heat Capabilities Actions"
+                               href="https://review.openstack.org/#/c/284460/6">284460,6</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Add Heat Capabilities Actions" data-content="Author: Ryan Brady<br>Commit:<br> Add Heat Capabilities Actions
+
+This patch adds the Actions for retrieving and updating the capabilites
+for a given deployment.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/60/284460/6/check-tripleo/gate-tripleo-ci-f22-upgrades/c241a9b/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:43 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Add Plan Deletion"
+                               href="https://review.openstack.org/#/c/299937/3">299937,3</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Add Plan Deletion" data-content="Author: Ryan Brady<br>Commit:<br> Add Plan Deletion
+
+This patch adds a mistral action that deletes a plan by deleting
+the swift container and mistral environment matching a given container
+name. It will not delete the plan if a stack exists with the same name.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/37/299937/3/check-tripleo/gate-tripleo-ci-f22-upgrades/9aeb65b/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 20:39 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="Adds Plan List Action"
+                               href="https://review.openstack.org/#/c/300221/3">300221,3</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: Adds Plan List Action" data-content="Author: Ryan Brady<br>Commit:<br> Adds Plan List Action
+
+This patch adds a mistral action for retrieving a list of tripleo
+deployment plans.  A tripleo deployment plan consists of a container
+and a mistral environment with the same name.
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/21/300221/3/check-tripleo/gate-tripleo-ci-f22-upgrades/ef9fddb/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="tripleo-mistral-base" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 19:29 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="StackAction parameter to distinguish top-level create vs. update"
+                               href="https://review.openstack.org/#/c/306392/1">306392,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: StackAction parameter to distinguish top-level create vs. update" data-content="Author: Jiri Stransky<br>Commit:<br> StackAction parameter to distinguish top-level create vs. update
+
+Previously we tried to use UpdateIdentifier for two different things:
+tell whether to perform package update, and also to tell whether the
+top-level stack is being created or updated (which was incorrect and
+resulted in bug 1567384, and an attempt to work around that bug resulted
+in bug 1567385).
+
+We cannot use Heat&#39;s &#34;action&#34; conditionals in some cases, because they
+refer to the direct parent stack, which can yield undesirable results
+when introducing new nested stacks or temporarily no-opping something
+and then adding it back (in both these cases, &#34;action&#34; would be
+considered &#34;CREATE&#34;, even though the top-level stack is in &#34;UPDATE&#34;).
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/92/306392/1/check-tripleo/gate-tripleo-ci-f22-upgrades/255107a/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="bug/1567384" href="https://review.openstack.org/#/q/status:open+branch:stable/mitaka+project:openstack/tripleo-common">stable/mitaka</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
+                    </td>
+                </tr>
+            
+                <tr style="color:blue">
+                    
+                    <td style="color:blue">
+                    | 04-29 03:22 |
+                    </td>
+                    
+                    <td style="color:blue">
+                    |  |
+                    </td>
+                    
+                    
+                    <td>
+                        | 
+                            <a data-toggle="tooltip" data-placement="top" title="WIP pseudo code of heat deployment action"
+                               href="https://review.openstack.org/#/c/310966/1">310966,1</a>
+                        <a tabindex="0" class="btn" role="button" data-toggle="popover" data-trigger="focus" data-html="true"
+                           title="Subject: WIP pseudo code of heat deployment action" data-content="Author: Steve Baker<br>Commit:<br> WIP pseudo code of heat deployment action
+
+"><strong>?</strong></a>
+                         |
+                    </td>
+                    
+                    
+                    <td>
+                    | <a href="http://logs.openstack.org/66/310966/1/check-tripleo/gate-tripleo-ci-f22-upgrades/76fc323/">Logs</a> |
+                    </td>
+                    
+                    <td>
+                    | <a href="https://review.openstack.org/#/q/status:open+project:openstack/tripleo-common">tripleo-common</a> |
+                    </td>
+                    
+                    <td>
+                    | <a  data-toggle="tooltip" data-placement="top" title="heat-deployment-action" href="https://review.openstack.org/#/q/status:open+branch:master+project:openstack/tripleo-common">master</a> |
+                    </td>
+                    
+                    <td>
+                    | No URL |
                     </td>
                 </tr>
             
@@ -385,6 +2355,12 @@ $('#all').on('click',function(){
   $('#all').parent().addClass('active');
   $('.tab-pane').addClass('active in');
   $('[data-toggle="tab"]').parent().removeClass('active');
+});
+$(function () {
+  $('[data-toggle="tooltip"]').tooltip();
+});
+$(function () {
+  $('[data-toggle="popover"]').popover();
 });
 </script>
 </body>

@@ -19,6 +19,7 @@ exec_re = re.compile('mError: (\S+?) \S+ returned 1 instead of one of')
 patchset_re = re.compile('(https://review.openstack.org/\d+).*patchset (\d+)')
 date_re = re.compile("Date: \d+-(\d+-\d+) (\d+:\d+)")
 len_re = re.compile("- (\d+[mhs])")
+deps_re = re.compile("Failed to build (.*)")
 
 VERBOSE = False
 
@@ -170,6 +171,11 @@ PATTERNS = [
                     "returned non-zero exit status"),
         "msg": "Undercloud install FAIL.",
         "tag": "code"
+    },
+    {
+        "pattern": deps_re,
+        "msg": "Failed to install deps: {}",
+        "tag": "infra"
     },
 ]
 

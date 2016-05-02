@@ -20,6 +20,7 @@ patchset_re = re.compile('(https://review.openstack.org/\d+).*patchset (\d+)')
 date_re = re.compile("Date: \d+-(\d+-\d+) (\d+:\d+)")
 len_re = re.compile("- (\d+[mhs])")
 deps_re = re.compile("Failed to build (.*)")
+curl_re = re.compile("curl: \S*? couldn't open file \"(.*?)\"")
 
 VERBOSE = False
 
@@ -175,6 +176,11 @@ PATTERNS = [
     {
         "pattern": deps_re,
         "msg": "Failed to install deps: {}",
+        "tag": "infra"
+    },
+    {
+        "pattern": curl_re,
+        "msg": "Failed to upload/get image: {}.",
         "tag": "infra"
     },
 ]
@@ -503,7 +509,8 @@ def main():
                 job_type=short_name,
                 excluded=EXCLUDED_JOB_TYPE,
                 down_path=LOGS_DIR,
-                page=MAIN_PAGE)
+                page=MAIN_PAGE
+                )
     stats_list = print_analysis(stats)
     print "Statistics:"
     print "Analysis of page:", MAIN_PAGE

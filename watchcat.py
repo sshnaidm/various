@@ -228,17 +228,10 @@ PATTERNS = {
             "tag": "code",
         },
     ],
-    '/logs/ps.txt.gz': [
-        {
-            "pattern": '/usr/sbin/ntpd -u ntp:ntp -g',
-            "msg": "Test FAIL.",
-            "tag": "code",
-        },
-    ],
     '/logs/overcloud-controller-0.tar.xz//var/log/neutron/server.log': [
         {
             "pattern": 'Extension router-service-type not supported',
-            "msg": "Test2 FAIL.",
+            "msg": "Testing pattern, please ignore.",
             "tag": "code",
         },
     ]
@@ -531,6 +524,7 @@ class JobFile:
         self.file_name = os.path.basename(self.file_link).rstrip(".gz") + ".gz"
         self.file_path = os.path.join(self.job_dir, self.file_name)
         if os.path.exists(self.file_path):
+            log.debug("File {} is already downloaded".format(self.file_path))
             return self.file_path
         else:
             web = Web(url=self.file_url)
@@ -550,6 +544,8 @@ class JobFile:
             return self.file_path
 
     def _extract(self, tar, root_dir, file_path):
+        log.debug("Extracting file {} from {} in {}".format(
+                file_path, tar, root_dir))
         try:
             with contextlib.closing(lzma.LZMAFile(tar)) as xz:
                 with tarfile.open(fileobj=xz) as f:
@@ -564,17 +560,19 @@ class JobFile:
         tar_file_link, intern_path = self.file_link.split("//")
         log.debug("Get file {} from tar.gz archive {}".format(intern_path, tar_file_link))
         tar_base_name = os.path.basename(tar_file_link)
-        tar_prefix = os.path.splitext(tar_base_name)[0]
+        tar_prefix = tar_base_name.split(".")[0]
         tar_root_dir = os.path.join(self.job_dir, tar_prefix)
         self.file_path = os.path.join(tar_root_dir, intern_path)
-        if os.path.exists(self.file_path):
-            return self.file_path
+
+        if os.path.exists(self.file_path + ".gz"):
+            log.debug("File {} is already downloaded".format(
+                self.file_path + ".gz"))
+            return self.file_path + ".gz"
         if not os.path.exists(tar_root_dir):
             os.makedirs(tar_root_dir)
         tar_file_path = os.path.join(self.job_dir, tar_base_name)
-
         if not os.path.exists(tar_file_path):
-            web = Web(url=tar_file_link)
+            web = Web(url=self.file_url )
             req = web.get()
             if req.status_code != 200:
                 return None
@@ -585,6 +583,7 @@ class JobFile:
             with open(self.file_path, 'rb') as f:
                 with gzip.open(self.file_path + ".gz", 'wb') as zipped_file:
                     zipped_file.writelines(f)
+            os.remove(self.file_path)
             self.file_path += ".gz"
             return self.file_path
         else:
@@ -630,6 +629,7 @@ def analysis(job, down_path):
             break
         else:
             try:
+                log.debug("Opening file for scan: {}".format(jfile))
                 for line in fileinput.input(
                         jfile, openhook=fileinput.hook_compressed):
                     for p in PATTERNS[file]:
@@ -639,11 +639,12 @@ def analysis(job, down_path):
                                 line_match(p["pattern"], line)))
                             tags.add(p["tag"])
                 if not msg:
+                    log.debug("No patterns in file {}".format(jfile))
                     msg = {"Reason was NOT FOUND. Please investigate"}
                     found_reason = False
                     tags.add("unknown")
             except Exception as e:
-                print "Exception when parsing {}: {}".format(jfile, str(e))
+                log.error("Exception when parsing {}: {}".format(jfile, str(e)))
                 msg = {"Error when parsing logs. Please investigate"}
                 found_reason = False
                 tags.add("unknown")

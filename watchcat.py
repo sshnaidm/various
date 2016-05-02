@@ -10,6 +10,7 @@ import contextlib
 import lzma
 import tarfile
 import fileinput
+from lxml import etree
 from requests import ConnectionError
 
 requests.packages.urllib3.disable_warnings()
@@ -44,6 +45,11 @@ resolving_re = re.compile(
     'Could not resolve host: (\S+); Name or service not known')
 exec_re = re.compile('mError: (\S+?) \S+ returned 1 instead of one of')
 failed_deps_re = re.compile('Failed to build (.*)')
+
+# Jobs regexps
+branch_re = re.compile('\+ export ZUUL_BRANCH=(\S+)')
+ts_re = re.compile('(201\d-[01]\d-[0123]\d [012]\d:\d\d):\d\d\.\d\d\d')
+
 # https://github.com/openstack-infra/project-config/blob/master/
 # gerritbot/channels.yaml
 PROJECTS = (
@@ -70,6 +76,15 @@ PROJECTS = (
     'openstack/tripleo-specs',
     'openstack/tripleo-ui',
 )
+
+PERIODIC_URLS = [
+    'http://logs.openstack.org/periodic/periodic-tripleo-ci-f22-ha-liberty/',
+    'http://logs.openstack.org/periodic/periodic-tripleo-ci-f22-ha-mitaka/',
+    'http://logs.openstack.org/periodic/periodic-tripleo-ci-f22-ha/',
+    'http://logs.openstack.org/periodic/periodic-tripleo-ci-f22-nonha/',
+    'http://logs.openstack.org/periodic/periodic-tripleo-ci-f22-upgrades/',
+]
+
 
 PATTERNS = {
 
@@ -228,13 +243,13 @@ PATTERNS = {
             "tag": "code",
         },
     ],
-    '/logs/overcloud-controller-0.tar.xz//var/log/neutron/server.log': [
-        {
-            "pattern": 'Extension router-service-type not supported',
-            "msg": "Testing pattern, please ignore.",
-            "tag": "code",
-        },
-    ]
+    # '/logs/overcloud-controller-0.tar.xz//var/log/neutron/server.log': [
+    #     {
+    #         "pattern": 'Extension router-service-type not supported',
+    #         "msg": "Testing pattern, please ignore.",
+    #         "tag": "code",
+    #     },
+    # ]
 }
 
 
@@ -291,6 +306,100 @@ class Gerrit(object):
                 data += filtered(out)
         self.ssh.close()
         return data
+
+class Periodic(object):
+    def __init__(self, url, down_path=DOWNLOAD_PATH):
+        self.per_url = url
+        self.down_path = down_path
+        self.jobs = self.get_jobs()
+
+    def _get_index(self):
+        w = Web(self.per_url)
+        req = w.get()
+        if req.status_code != 200:
+            log.error("Can not retrieve periodic page {}".format(self.per_url))
+            return None
+        return req.content
+
+    def _get_console(self, job):
+        path = os.path.join(
+            self.down_path, job["log_hash"], "console.html.gz")
+        if os.path.exists(path):
+            log.debug("Console is already here: {}".format(path))
+            return path
+        web = Web(job["log_url"] + "/console.html")
+        req = web.get(ignore404=True)
+        if req.status_code == 404:
+            url = job["log_url"] + "/console.html.gz"
+            web = Web(url=url)
+            log.debug("Trying to download gzipped console")
+            req = web.get()
+        if req.status_code != 200:
+            log.error("Failed to retrieve console: {}".format(job["log_url"]))
+            return None
+        else:
+            if not os.path.exists(os.path.dirname(path)):
+                os.makedirs(os.path.dirname(path))
+            with gzip.open(path, "wb") as f:
+                f.write(req.content)
+        return path
+
+    def parse_index(self, text):
+        et = etree.HTML(text)
+        trs = [i for i in et.xpath("//tr") if not i.xpath("th")][1:]
+        for tr in trs:
+            job = {}
+            td1, td2 = tr.xpath("td")[1:3]
+            lhash = td1.xpath("a")[0].attrib['href'].rstrip("/")
+            job["log_hash"] = lhash
+            job["log_url"] = self.per_url.rstrip("/") + "/" + lhash
+            job["ts"] = datetime.datetime.strptime(td2.text.strip(),
+                                                   "%d-%b-%Y %H:%M")
+            job["name"] = self.per_url.rstrip("/").split("/")[-1]
+            yield job
+
+    def _parse_ts(self, ts):
+        return datetime.datetime.strptime(ts, "%Y-%m-%d %H:%M")
+
+    def _get_more_data(self, j):
+        def delta(e, s):
+            return (self._parse_ts(e) - self._parse_ts(s)).seconds / 60
+
+        start = end = None
+        console = self._get_console(j)
+        if not console:
+            log.error("Failed to get console for periodic {}".format(repr(j)))
+        else:
+            for line in fileinput.input(console,
+                                        openhook=fileinput.hook_compressed):
+                if "Finished: SUCCESS" in line:
+                    j['fail'] = False
+                    j['status'] = 'SUCCESS'
+                elif "Finished: FAILURE" in line:
+                    j['fail'] = True
+                    j['status'] = 'FAILURE'
+                elif "Finished: ABORTED" in line:
+                    j['fail'] = True
+                    j['status'] = 'ABORTED'
+                if branch_re.search(line):
+                    j['branch'] = branch_re.search(line).group(1)
+                if 'Started by user' in line:
+                    start = ts_re.search(line).group(1)
+                if "Finished: " in line:
+                    end = ts_re.search(line).group(1)
+            j['length'] = delta(end, start) if start and end else 0
+            # Go over bad cases
+            j['status'] = j.get('status', 'FAILURE')
+            j['fail'] = j.get('fail', True)
+            j['branch'] = j.get('branch') or ''
+        return j
+
+    def get_jobs(self):
+        index = self._get_index()
+        jobs = self.parse_index(index)
+        for j in jobs:
+            raw = self._get_more_data(j)
+            yield PeriodicJob(**raw)
 
 
 class Patch(object):
@@ -371,8 +480,10 @@ class Job(object):
         self.patch = patch
         self.patchset = patchset
         self.ts = timestamp
+        self.branch = self.patch.branch if self.patch else ""
         self.datetime = self.ts.strftime("%m-%d %H:%M")
         self.log_hash = self.hashed(self.log_url)
+        self.periodic = False
 
     def hashed(self, url):
         return url.strip("/").split("/")[-1]
@@ -381,13 +492,28 @@ class Job(object):
         return str({'name': self.name,
                     'log_url': self.log_url,
                     'status': self.status,
-                    'project': self.patch.project,
-                    'branch': self.patch.branch,
+                    'project': self.patch.project if self.patch else "",
+                    'branch': self.branch,
                     'length': str(self.length),
-                    'patchset': str(self.patchset.number),
-                    'patchset_url': str(self.patchset.patchset_url),
+                    'patchset': str(
+                        self.patchset.number) if self.patchset else "",
+                    'patchset_url': str(
+                        self.patchset.patchset_url) if self.patchset else "",
                     'date': datetime.datetime.strftime(self.ts, "%m-%d %H:%M")
                     })
+
+class PeriodicJob(Job):
+    def __init__(self, **kwargs):
+        super(PeriodicJob, self).__init__(
+            name=kwargs["name"],
+            log_url=kwargs["log_url"],
+            status=kwargs["status"],
+            length=kwargs["length"],
+            timestamp=kwargs["ts"],
+            patch=None,
+            patchset=None
+        )
+        self.periodic = True
 
 
 class Filter:
@@ -399,9 +525,10 @@ class Filter:
                  short=None,
                  fail=True,
                  exclude=None,
-                 job_type=None):
+                 job_type=None,
+                 periodic=False):
         self.data = sorted(data, key=lambda i: i.ts, reverse=True)
-        self.default = [self.f_only_tracked]
+        self.default = [self.f_only_tracked] if not periodic else []
         self.limit = limit
         self.filters = [
             (self.f_days, days),
@@ -413,8 +540,9 @@ class Filter:
         ]
 
     def run(self):
-        for fil in self.default:
-            self.data = [job for job in self.data if fil(job)]
+        if self.default:
+            for fil in self.default:
+                self.data = [job for job in self.data if fil(job)]
         for filt in self.filters:
             self.data = [job for job in self.data if filt[0](job, filt[1])]
         if self.limit:
@@ -447,13 +575,17 @@ class Filter:
         job_date = self._job_day_format(job.ts)
         return job_date in dates
 
-
     def f_short(self, job, short):
         def shorten(x):
             return {'gate-tripleo-ci-f22-upgrades': 'upgrades',
                     'gate-tripleo-ci-f22-nonha': 'nonha',
                     'gate-tripleo-ci-f22-ha': 'ha',
-                    'gate-tripleo-ci-f22-containers': 'containers'
+                    'gate-tripleo-ci-f22-containers': 'containers',
+                    'periodic-tripleo-ci-f22-ha-liberty': 'ha',
+                    'periodic-tripleo-ci-f22-ha-mitaka': 'ha',
+                    'periodic-tripleo-ci-f22-ha': 'ha',
+                    'periodic-tripleo-ci-f22-nonha': 'nonha',
+                    'periodic-tripleo-ci-f22-upgrades': 'upgrades',
                     }.get(x, x)
 
         if not short:
@@ -682,18 +814,23 @@ def meow(days=None,
          exclude=None,
          job_type=None,
          down_path=DOWNLOAD_PATH,
+         periodic=True,
          debug_file_res=True
          ):
-    if not debug_file_res:
-        g = Gerrit()
-        gerrit = g.get_project_patches(['openstack/tripleo-common'])
-        with open("/tmp/gerrit", "w") as f:
-            s = json.dumps(gerrit)
-            f.write(s)
+    if not periodic:
+        if not debug_file_res:
+            g = Gerrit()
+            gerrit = g.get_project_patches(['openstack/tripleo-common'])
+            with open("/tmp/gerrit", "w") as f:
+                s = json.dumps(gerrit)
+                f.write(s)
+        else:
+            with open("/tmp/gerrit", "r") as f:
+                gerrit = json.loads(f.read())
+        jobs = (job for patch in gerrit for job in Patch(patch).jobs)
     else:
-        with open("/tmp/gerrit", "r") as f:
-            gerrit = json.loads(f.read())
-    jobs = (job for patch in gerrit for job in Patch(patch).jobs)
+        jobs = (job for url in PERIODIC_URLS
+                for job in Periodic(url, down_path=down_path).jobs)
     f = Filter(
         jobs,
         days=days,
@@ -702,7 +839,8 @@ def meow(days=None,
         short=short,
         fail=fail,
         exclude=exclude,
-        job_type=job_type
+        job_type=job_type,
+        periodic=periodic
         # dates=["04-19", "04-29", "04-28"],
         # limit=None,
         # exclude='gate-tripleo-ci-f22-containers'
@@ -715,7 +853,7 @@ def meow(days=None,
 
 
 def main():
-    for m in  meow(limit=10, dates=["04-30"]):
+    for m in meow(limit=10, dates=["04-30"]):
         print m["text"]
 
 

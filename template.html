@@ -35,12 +35,16 @@
         <div id="{{ key }}" class="tab-pane fade{% if rowloop.first and loop.first%} in active{%  endif %}">
         <h3 style="align-content: center">{{ key }}</h3>
             <table class="table table-hover">
-            <thead><td>Date</td><td>Reason</td><td>Patch</td><td>Logs</td><td>Project</td><td>Branch</td><td>Build</td></thead>
+            <thead><td>Date</td><td>Length</td><td>Reason</td><td>Patch</td><td>Logs</td><td>Project</td><td>Branch</td><td>Build</td></thead>
             {%  for i in data[key] %}
                 <tr style="color:{% if i.reason and 'infra' in i.tags %}red{% elif i.reason %}blue{% else %}black{% endif %}">
                     {# Date #}
                     <td style="color:{% if i.reason and 'infra' in i.tags %}red{% elif i.reason %}blue{% else %}black{% endif %}">
                     | {{  i.job.datetime }} |
+                    </td>
+                    {# Length #}
+                    <td style="color:{% if i.reason and 'infra' in i.tags %}red{% elif i.reason %}blue{% else %}black{% endif %}">
+                    | {{  i.job.length }} min |
                     </td>
                     {# Reason #}
                     <td style="color:{% if i.reason and 'infra' in i.tags %}red{% elif i.reason %}blue{% else %}black{% endif %}">
@@ -62,13 +66,17 @@
                     | <a href="{{ i.job.log_url }}">Logs</a> |
                     </td>
                     {# Project #}
+                    {% if not i.periodic %}
                     <td>
                     | <a href="https://review.openstack.org/#/q/status:open+project:{{ i.job.patch.project }}">{{ i.job.patch.project.split("/")[1]|default(i.job.patch.project) }}</a> |
                     </td>
+                    {% endif %}
                     {# Branch #}
+                    {% if not i.periodic %}
                     <td>
-                    | <a  data-toggle="tooltip" data-placement="top" title="{{ i.job.patch.topic|default('') }}" href="https://review.openstack.org/#/q/status:open+branch:{{ i.job.patch.branch }}+project:{{ i.job.patch.project }}">{{ i.job.patch.branch }}</a> |
+                    | <a  data-toggle="tooltip" data-placement="top" title="{{ i.job.patch.topic|default('') }}" href="https://review.openstack.org/#/q/status:open+branch:{{ i.job.branch }}+project:{{ i.job.patch.project|default('') }}">{{ i.job.branch }}</a> |
                     </td>
+                    {% endif %}
                     {# Build #}
                     <td>
                     | {% if  i.job.build_url %}<a href="{{ i.job.build_url }}">Jenkins</a>{% else %}No URL{% endif %} |

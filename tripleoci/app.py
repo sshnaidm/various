@@ -16,13 +16,13 @@ def main():
 
     work_dir = os.path.dirname(__file__)
 
-    ci_data = meow(limit=None,
+    ci_data = meow(limit=200,
                        days=None,
                        job_type=None,
                        exclude="containers",
                        down_path=os.path.join(os.environ["HOME"], "ci_status"))
 
-    periodic_data = meow(limit=None,
+    periodic_data = meow(limit=50,
                          days=None,
                          job_type=None,
                          exclude="containers",
@@ -34,6 +34,7 @@ def main():
         pickle.dump(ci_data, g)
     with open("/tmp/periodic_data_dump", "w") as g:
         pickle.dump(ci_data, g)
+    # For debug mode
     # with open("/tmp/ci_data_dump", "rb") as g:
     #     ci_data = pickle.load(g)
     # with open("/tmp/periodic_data_dump", "rb") as g:

@@ -20,13 +20,13 @@ def meow(days=None,
          ):
     if not periodic:
         g = Gerrit()
-        #gerrit = g.get_project_patches(config.PROJECTS)
+        gerrit = g.get_project_patches(config.PROJECTS)
         # Dump gerrit data for investigation
-        #with open("/tmp/gerrit", "w") as f:
-        #    f.write(json.dumps(gerrit))
+        with open("/tmp/gerrit", "w") as f:
+            f.write(json.dumps(gerrit))
         # If debug mode
-        with open("/tmp/gerrit", "r") as f:
-            gerrit = json.loads(f.read())
+        # with open("/tmp/gerrit", "r") as f:
+        #     gerrit = json.loads(f.read())
         jobs = (job for patch in gerrit for job in Patch(patch).jobs)
     else:
         jobs = (job

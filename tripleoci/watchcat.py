@@ -12,6 +12,8 @@ import tarfile
 import fileinput
 from lxml import etree
 from requests import ConnectionError
+from gevent import monkey
+monkey.patch_all()
 
 requests.packages.urllib3.disable_warnings()
 
@@ -21,7 +23,7 @@ log = logging.getLogger('watchcat')
 log.setLevel(logging.DEBUG)
 
 DIR = os.path.dirname(os.path.realpath(__file__))
-DOWNLOAD_PATH = os.path.join(os.environ["HOME"], "ci-files")
+DOWNLOAD_PATH = os.path.join(os.environ["HOME"], "ci_status")
 SSH_TIMEOUT = 120
 GERRIT_REQ_TIMEOUT = 2
 GERRIT_HOST = "review.openstack.org"
@@ -308,9 +310,10 @@ class Gerrit(object):
         return data
 
 class Periodic(object):
-    def __init__(self, url, down_path=DOWNLOAD_PATH):
+    def __init__(self, url, down_path=DOWNLOAD_PATH, limit=None):
         self.per_url = url
         self.down_path = down_path
+        self.limit = limit
         self.jobs = self.get_jobs()
 
     def _get_index(self):
@@ -345,6 +348,7 @@ class Periodic(object):
         return path
 
     def parse_index(self, text):
+        jobs = []
         et = etree.HTML(text)
         trs = [i for i in et.xpath("//tr") if not i.xpath("th")][1:]
         for tr in trs:
@@ -356,7 +360,8 @@ class Periodic(object):
             job["ts"] = datetime.datetime.strptime(td2.text.strip(),
                                                    "%d-%b-%Y %H:%M")
             job["name"] = self.per_url.rstrip("/").split("/")[-1]
-            yield job
+            jobs.append(job)
+        return sorted(jobs, key=lambda x: x['ts'], reverse=True)
 
     def _parse_ts(self, ts):
         return datetime.datetime.strptime(ts, "%Y-%m-%d %H:%M")
@@ -366,6 +371,11 @@ class Periodic(object):
             return (self._parse_ts(e) - self._parse_ts(s)).seconds / 60
 
         start = end = None
+        j.update({
+            'status': 'FAILURE',
+            'fail': True,
+            'branch': ''
+        })
         console = self._get_console(j)
         if not console:
             log.error("Failed to get console for periodic {}".format(repr(j)))
@@ -388,15 +398,11 @@ class Periodic(object):
                 if "Finished: " in line:
                     end = ts_re.search(line).group(1)
             j['length'] = delta(end, start) if start and end else 0
-            # Go over bad cases
-            j['status'] = j.get('status', 'FAILURE')
-            j['fail'] = j.get('fail', True)
-            j['branch'] = j.get('branch') or ''
         return j
 
     def get_jobs(self):
         index = self._get_index()
-        jobs = self.parse_index(index)
+        jobs = self.parse_index(index)[:self.limit]
         for j in jobs:
             raw = self._get_more_data(j)
             yield PeriodicJob(**raw)
@@ -830,7 +836,8 @@ def meow(days=None,
         jobs = (job for patch in gerrit for job in Patch(patch).jobs)
     else:
         jobs = (job for url in PERIODIC_URLS
-                for job in Periodic(url, down_path=down_path).jobs)
+                for job in Periodic(
+            url, down_path=down_path, limit=limit).jobs)
     f = Filter(
         jobs,
         days=days,

@@ -16,16 +16,16 @@ def main():
 
     work_dir = os.path.dirname(__file__)
 
-    ci_data = meow(limit=200,
-                       days=None,
+    ci_data = meow(limit=None,
+                       days=7,
                        job_type=None,
-                       exclude="containers",
+                       exclude="gate-tripleo-ci-f22-containers",
                        down_path=os.path.join(os.environ["HOME"], "ci_status"))
 
     periodic_data = meow(limit=50,
                          days=None,
                          job_type=None,
-                         exclude="containers",
+                         exclude="gate-tripleo-ci-f22-containers",
                          down_path=os.path.join(os.environ["HOME"],
                                                 "ci_status"),
                          periodic=True)
@@ -49,7 +49,7 @@ def main():
         "ci": by_job_type(list(ci_data)),
         "periodic": by_job_type(list(periodic_data)),
     })
-    with open(os.path.join(work_dir, "..", "index.html"), "w") as f:
+    with open(os.path.join(work_dir, "index.html"), "w") as f:
         f.write(html)
 
 

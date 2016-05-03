@@ -65,7 +65,7 @@ class Gerrit(object):
                         '--patch-sets '
                         '--current-patch-set')
         for proj in projects:
-        # Start SSH for every project from scratch because SSH timeout
+            # Start SSH for every project from scratch because SSH timeout
             self.ssh = SSH(host=config.GERRIT_HOST,
                            port=config.GERRIT_PORT,
                            user=config.GERRIT_USER,
@@ -73,7 +73,9 @@ class Gerrit(object):
                            key_path=self.key_path)
             for branch in config.GERRIT_BRANCHES:
                 command = cmd_template.format(
-                    project=proj, branch=branch, limit=200)
+                    project=proj,
+                    branch=branch,
+                    limit=config.GERRIT_PATCH_LIMIT)
                 out, err = self.ssh.exe(command)[1:]
                 if err:
                     log.error("Error with ssh:{}".format(err))

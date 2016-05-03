@@ -45,6 +45,7 @@ PERIODIC_URLS = [
 DOWNLOAD_PATH = os.path.join(os.environ["HOME"], "ci_status")
 SSH_TIMEOUT = 120
 GERRIT_REQ_TIMEOUT = 2
+GERRIT_PATCH_LIMIT = 200
 GERRIT_HOST = "review.openstack.org"
 GERRIT_PORT = 29418
 GERRIT_USER = "robo"

@@ -30,7 +30,7 @@ class Patch(object):
     def _extract_job_from_comment(self, comment):
         def parse_time(x):
             timest = TIME_RE.search(x.strip())
-            hour, minute, sec = map(int, (
+            hour, minute, sec = (int(i) for i in (
                 timest.groupdict()['hour'] or 0,
                 timest.groupdict()['min'] or 0,
                 timest.groupdict()['sec'] or 0))
@@ -106,4 +106,3 @@ class Job(object):
                         self.patchset.patchset_url) if self.patchset else "",
                     'date': datetime.datetime.strftime(self.ts, "%m-%d %H:%M")
                     })
-

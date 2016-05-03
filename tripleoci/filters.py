@@ -1,7 +1,9 @@
 import datetime
+
 import config
 
-class Filter:
+
+class Filter(object):
     def __init__(self,
                  data,
                  days=None,

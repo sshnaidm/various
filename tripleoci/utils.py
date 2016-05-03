@@ -1,17 +1,16 @@
-import paramiko
-import json
-import os
-import gzip
-import requests
 import contextlib
+import gzip
+import json
 import lzma
+import os
+import paramiko
+import requests
 import tarfile
-import config
-
+import time
 from requests import ConnectionError
 
+import config
 from config import log
-
 
 requests.packages.urllib3.disable_warnings()
 
@@ -34,27 +33,29 @@ class SSH(object):
 
     def exe(self, cmd):
         log.debug("Executing cmd by ssh: {cmd}".format(cmd=cmd))
-        stdin, stdout, stderr = self.ssh_cl.exec_command(cmd)
+        try:
+            stdin, stdout, stderr = self.ssh_cl.exec_command(cmd)
+        except paramiko.ssh_exception.SSHException as e:
+            log.error("SSH command failed: {}\n{}".format(cmd, e))
+            return None, None, None
         return stdin, stdout.read(), stderr.read()
 
     def close(self):
+        log.debug("Closing SSH connection")
         self.ssh_cl.close()
 
 
 class Gerrit(object):
     def __init__(self):
         self.key_path = os.path.join(DIR, "robi_id_rsa")
+        self.ssh = None
 
     def get_project_patches(self, projects):
         def filtered(x):
             return [json.loads(i) for i in x.splitlines() if 'project' in i]
 
         data = []
-        self.ssh = SSH(host=config.GERRIT_HOST,
-                       port=config.GERRIT_PORT,
-                       user=config.GERRIT_USER,
-                       timeout=config.GERRIT_REQ_TIMEOUT,
-                       key_path=self.key_path)
+
         cmd_template = ('gerrit query "status: open project: '
                         '{project} '
                         'branch: {branch}" '
@@ -64,6 +65,12 @@ class Gerrit(object):
                         '--patch-sets '
                         '--current-patch-set')
         for proj in projects:
+        # Start SSH for every project from scratch because SSH timeout
+            self.ssh = SSH(host=config.GERRIT_HOST,
+                           port=config.GERRIT_PORT,
+                           user=config.GERRIT_USER,
+                           timeout=config.GERRIT_REQ_TIMEOUT,
+                           key_path=self.key_path)
             for branch in config.GERRIT_BRANCHES:
                 command = cmd_template.format(
                     project=proj, branch=branch, limit=200)
@@ -71,11 +78,13 @@ class Gerrit(object):
                 if err:
                     log.error("Error with ssh:{}".format(err))
                 data += filtered(out)
-        self.ssh.close()
+            self.ssh.close()
+            # Let's not ddos Gerrit
+            time.sleep(1)
         return data
 
 
-class Web:
+class Web(object):
     def __init__(self, url):
         self.url = url
 
@@ -89,7 +98,8 @@ class Web:
                     url=self.url, code=req.status_code))
         return req
 
-class JobFile:
+
+class JobFile(object):
     def __init__(self, job, path=config.DOWNLOAD_PATH, file_link=None,
                  build=None):
         self.job_dir = os.path.join(path, job.log_hash)
@@ -100,6 +110,7 @@ class JobFile:
         self.file_url = job.log_url + self.file_link.split("//")[0]
         self.file_path = None
         self.build = build
+        self.file_name = None
 
     def get_file(self):
         if self.build:
@@ -194,4 +205,3 @@ class JobFile:
             return self.file_path
         else:
             return None
-

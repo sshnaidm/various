@@ -1,9 +1,10 @@
-import re
 import fileinput
+import re
 
+from config import log
 from patterns import PATTERNS
 from utils import JobFile
-from config import log
+
 
 def analyze(job, down_path):
     def line_match(pat, line):
@@ -50,6 +51,8 @@ def analyze(job, down_path):
                     for p in PATTERNS[file]:
                         if (line_match(p["pattern"], line) and
                                 p["msg"] not in msg):
+                            log.debug("Found pattern {} in file {}:{}".format(
+                                repr(p), file, jfile))
                             msg.add(p["msg"].format(
                                 line_match(p["pattern"], line)))
                             tags.add(p["tag"])

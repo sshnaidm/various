@@ -1,13 +1,13 @@
 import re
 
 # Patterns regexps
-timeout_re = re.compile('Killed\s+timeout -s 9 ')
-puppet_re = re.compile('"deploy_stderr": ".+?1;31mError: .+?\W(\w+)::')
+timeout_re = re.compile(r"Killed\s+timeout -s 9 ")
+puppet_re = re.compile(r"\"deploy_stderr\": \".+?1;31mError: .+?\W(\w+)::")
 resolving_re = re.compile(
-    'Could not resolve host: (\S+); Name or service not known')
-exec_re = re.compile('mError: (\S+?) \S+ returned 1 instead of one of')
-failed_deps_re = re.compile('Failed to build (.*)')
-
+    r"Could not resolve host: (\S+); Name or service not known")
+exec_re = re.compile(r"mError: (\S+?) \S+ returned 1 instead of one of")
+failed_deps_re = re.compile(r"Failed to build (.*)")
+curl_re = re.compile(r"curl: \S*? couldn't open file \"(.*?)\"")
 
 PATTERNS = {
 
@@ -156,6 +156,16 @@ PATTERNS = {
             "pattern": failed_deps_re,
             "msg": "Failed to build dep {}.",
             "tag": "infra",
+        },
+        {
+            "pattern": curl_re,
+            "msg": "Failed to upload/get image: {}.",
+            "tag": "infra"
+        },
+        {
+            "pattern": "error: command 'gcc' failed with exit status 1",
+            "msg": "Failed to compile deps.",
+            "tag": "infra"
         },
     ],
 

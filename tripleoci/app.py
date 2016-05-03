@@ -1,5 +1,7 @@
-import os
 import jinja2
+import os
+import pickle
+
 from watchcat import meow
 
 
@@ -14,29 +16,28 @@ def main():
 
     work_dir = os.path.dirname(__file__)
 
-    local = False
-
-    if not local:
-        ci_data = meow(limit=10,
+    ci_data = meow(limit=None,
                        days=None,
                        job_type=None,
                        exclude="containers",
                        down_path=os.path.join(os.environ["HOME"], "ci_status"))
 
-    periodic_data = meow(limit=10,
+    periodic_data = meow(limit=None,
                          days=None,
                          job_type=None,
                          exclude="containers",
                          down_path=os.path.join(os.environ["HOME"],
                                                 "ci_status"),
                          periodic=True)
-    import pickle
-    if not local:
-        with open("/tmp/ttt", "w") as g:
-            pickle.dump(ci_data, g)
-    else:
-        with open("/tmp/ttt", "rb") as g:
-            ci_data = pickle.load(g)
+
+    with open("/tmp/ci_data_dump", "w") as g:
+        pickle.dump(ci_data, g)
+    with open("/tmp/periodic_data_dump", "w") as g:
+        pickle.dump(ci_data, g)
+    # with open("/tmp/ci_data_dump", "rb") as g:
+    #     ci_data = pickle.load(g)
+    # with open("/tmp/periodic_data_dump", "rb") as g:
+    #     periodic_data = pickle.load(g)
 
     JINJA_ENVIRONMENT = jinja2.Environment(
         loader=jinja2.FileSystemLoader(work_dir),
@@ -47,7 +48,7 @@ def main():
         "ci": by_job_type(list(ci_data)),
         "periodic": by_job_type(list(periodic_data)),
     })
-    with open(os.path.join(work_dir, "index.html"), "w") as f:
+    with open(os.path.join(work_dir, "..", "index.html"), "w") as f:
         f.write(html)
 
 

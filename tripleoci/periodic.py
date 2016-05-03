@@ -14,6 +14,7 @@ from utils import Web
 branch_re = re.compile(r"\+ export ZUUL_BRANCH=(\S+)")
 ts_re = re.compile(r"(201\d-[01]\d-[0123]\d [012]\d:\d\d):\d\d\.\d\d\d")
 
+
 class Periodic(object):
     def __init__(self, url, down_path=config.DOWNLOAD_PATH, limit=None):
         self.per_url = url
@@ -22,8 +23,8 @@ class Periodic(object):
         self.jobs = self.get_jobs()
 
     def _get_index(self):
-        w = Web(self.per_url)
-        req = w.get()
+        web = Web(self.per_url)
+        req = web.get()
         if req.status_code != 200:
             log.error("Can not retrieve periodic page {}".format(self.per_url))
             return None
@@ -111,7 +112,6 @@ class Periodic(object):
         for j in jobs:
             raw = self._get_more_data(j)
             yield PeriodicJob(**raw)
-
 
 
 class PeriodicJob(Job):

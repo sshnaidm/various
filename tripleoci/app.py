@@ -6,6 +6,12 @@ from watchcat import meow
 
 
 def main():
+    """
+        This function runs job analysis by calling meow() and creates HTML page
+        with all data it received.
+        HTML is created by Jinja templating template.html file.
+    :return: writes index.html file in current directory
+    """
 
     def by_job_type(l):
         job_types = {i["job"].name for i in l if i["job"].name}
@@ -15,7 +21,6 @@ def main():
         return d
 
     work_dir = os.path.dirname(__file__)
-
     ci_data = meow(limit=None,
                        days=7,
                        job_type=None,

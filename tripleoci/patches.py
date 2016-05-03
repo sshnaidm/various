@@ -8,6 +8,10 @@ TIME_RE = re.compile(r"((?P<hour>\d+)h)? *((?P<min>\d+)m)? *((?P<sec>\d+)s)?")
 
 
 class Patch(object):
+    """
+        Class that creates Patch object from patch data from gerrit.
+        It contains various info the could be useful for reports.
+    """
     def __init__(self, data):
         self.data = data
         self.branch = data['branch']
@@ -65,6 +69,10 @@ class Patch(object):
 
 
 class Patchset(object):
+    """
+        Class that creates Patchset object from patchset data from gerrit.
+        It contains various info the could be useful for reports.
+    """
     def __init__(self, data, patch):
         self.number = int(data['number'])
         self.patchset_ctime = datetime.datetime.fromtimestamp(
@@ -75,6 +83,11 @@ class Patchset(object):
 
 
 class Job(object):
+    """
+        Class that creates Job object from patch data from gerrit.
+        It's extracted from all comments to patch that are done by Jenkins.
+        It contains various info the could be useful for reports.
+    """
     def __init__(self,
                  name, log_url, status, length, patch, patchset, timestamp):
         self.name = name

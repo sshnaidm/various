@@ -18,6 +18,9 @@ DIR = os.path.dirname(os.path.realpath(__file__))
 
 
 class SSH(object):
+    """
+        SSH class, just for any connection
+    """
     def __init__(self,
                  host, port, user, timeout=None, key=None, key_path=None):
         self.ssh_cl = paramiko.SSHClient()
@@ -46,6 +49,10 @@ class SSH(object):
 
 
 class Gerrit(object):
+    """
+        Gerrit class, it connects to upstream Gerrit and run queries.
+        It downloads all info about patches from given projects.
+    """
     def __init__(self):
         self.key_path = os.path.join(DIR, "robi_id_rsa")
         self.ssh = None
@@ -87,10 +94,22 @@ class Gerrit(object):
 
 
 class Web(object):
+    """
+        Web class for downloading web page
+    """
     def __init__(self, url):
         self.url = url
 
     def get(self, ignore404=False):
+        """
+            Sometimes console.html is gzipped on logs server and console.html
+            is not available anymore, so here it silently fails when trying to
+            download console.html and then tries to get console.html.gz
+            We don't want redundant error messages in console
+
+        :param ignore404: not to show error message if got 404 error
+        :return: request obj
+        """
         log.debug("GET {url} with ignore404={i}".format(
             url=self.url, i=str(ignore404)))
         req = requests.get(self.url)
@@ -102,6 +121,21 @@ class Web(object):
 
 
 class JobFile(object):
+    """
+        JobFile downloads file from saved logs of the job.
+        It supports two modes: gzipped flat file and file from *.tar.xz.
+        If we need /var/log/neutron/server.log from overcloud-control.tar.xz
+        file then we pass link as:
+        /logs/overcloud-control.tar.gz//var/log/neutron/server.log
+        It tells to download overcloud-control.tar.xz from saved logs, then
+        extracts var/log/neutron/server.log to created 'overcloud-control'
+        folder and save it gzipped.
+        The flat file is also saved gzipped to save the space on disk.
+        All files related to job are saved in job directory that named as log
+        hash in URL to prevent collisions.
+        If file presents on disk it doesn't download it.
+
+    """
     def __init__(self, job, path=config.DOWNLOAD_PATH, file_link=None,
                  build=None):
         self.job_dir = os.path.join(path, job.log_hash)
@@ -115,6 +149,12 @@ class JobFile(object):
         self.file_name = None
 
     def get_file(self):
+        """
+            "//" mean we need to download tar.xz and then extract file
+            after "//" from it:
+                /logs/overcloud-controller-0.tar.xz//var/log/neutron/server.log
+        :return: path to gzipped file
+        """
         if self.build:
             return self.get_build_page()
         if "//" in self.file_link:

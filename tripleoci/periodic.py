@@ -16,6 +16,13 @@ ts_re = re.compile(r"(201\d-[01]\d-[0123]\d [012]\d:\d\d):\d\d\.\d\d\d")
 
 
 class Periodic(object):
+    """
+        Class that actually parses periodic jobs HTML page.
+        It tries to extract all available info from the page, but
+        some info could be found only in console.html, for example
+        job status. So it needs to download console.html for every job and
+        to parse it also.
+    """
     def __init__(self, url, down_path=config.DOWNLOAD_PATH, limit=None):
         self.per_url = url
         self.down_path = down_path
@@ -115,6 +122,9 @@ class Periodic(object):
 
 
 class PeriodicJob(Job):
+    """
+        Class that contains all necessary info for periodic job.
+    """
     def __init__(self, **kwargs):
         super(PeriodicJob, self).__init__(
             name=kwargs["name"],

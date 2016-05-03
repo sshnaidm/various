@@ -9,13 +9,17 @@ exec_re = re.compile(r"mError: (\S+?) \S+ returned 1 instead of one of")
 failed_deps_re = re.compile(r"Failed to build (.*)")
 curl_re = re.compile(r"curl: \S*? couldn't open file \"(.*?)\"")
 
+# Patterns to search in files
 PATTERNS = {
-
+    # file that should contain the pattern
     "/console.html": [
 
         {
+            # Pattern to search
             "pattern": "Stack overcloud CREATE_COMPLETE",
+            # Message to print if pattern was found
             "msg": "Overcloud stack installation: SUCCESS.",
+            # Tag that marks problem: infra, code, or nothing special
             "tag": "",
         },
         {

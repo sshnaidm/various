@@ -4,6 +4,9 @@ import config
 
 
 class Filter(object):
+    """
+        Class for filtering jobs to remain only requested.
+    """
     def __init__(self,
                  data,
                  days=None,
@@ -14,6 +17,23 @@ class Filter(object):
                  exclude=None,
                  job_type=None,
                  periodic=False):
+        """
+            Receives a lot of filtering arguments:
+
+        :param data: job data (Job class object)
+        :param days: how many days to take, i.e. 7 - last week
+        :param dates: specific dates in format ["%m-%d", ..]:['04-15', '05-02']
+        :param limit: limit overall amount of jobs to analyze
+        :param short: analyze only this type of jobs,
+                        accepts short name: "ha","upgrades","nonha"
+        :param fail: whether analyze and print only failed jobs
+                        (true by default)
+        :param exclude: exclude specific job type, i.e.
+                        "gate-tripleo-ci-f22-containers"
+        :param job_type: include only this job type (like short, but accepts
+                         full name): "gate-tripleo-ci-f22-nonha"
+        :param periodic: if it's periodic job (periodic=True) or patch (False)
+        """
         self.data = sorted(data, key=lambda i: i.ts, reverse=True)
         self.default = [self.f_only_tracked] if not periodic else []
         self.limit = limit
@@ -27,6 +47,12 @@ class Filter(object):
         ]
 
     def run(self):
+        """
+            It contains a chain of filters.
+            default - leave only tracked jobs (TRACKED_JOBS in config.py)
+                        but it's not relevant in periodic jobs
+        :return: list of filtered jobs
+        """
         if self.default:
             for fil in self.default:
                 self.data = [job for job in self.data if fil(job)]

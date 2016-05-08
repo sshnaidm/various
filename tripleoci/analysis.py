@@ -20,19 +20,25 @@ def analyze(job, down_path):
 
     message = {
         "text": '',
-        "tags": [],
-        "msg": '',
-        "reason": False,
+        "tags": set(),
+        "msg": set(),
+        "reason": True,
         "job": job,
-        "periodic": False,
+        "periodic": "periodic" in job.name,
+        'patterns': set(),
     }
+    templ = ("{date}\t"
+             "{job_type:38}\t"
+             "{delim}\t"
+             "{msg:60}\t"
+             "{delim}\t"
+             "log: {log_url}")
 
     msg = set()
-    tags = set()
-    found_reason = True
     console = JobFile(job, path=down_path).get_file()
     if not console:
-        message['text'] = message['msg'] = 'No console file'
+        message['text'] = 'No console file'
+        message['msg'] = set(message['text'])
         message['tags'] = ['infra']
         message['reason'] = True
         return message
@@ -55,38 +61,26 @@ def analyze(job, down_path):
                                 repr(p), file, jfile))
                             msg.add(p["msg"].format(
                                 line_match(p["pattern"], line)))
-                            tags.add(p["tag"])
+                            message['tags'].add(p["tag"])
+                            message['patterns'].add(p['id'])
 
             except Exception as e:
                 log.error("Exception when parsing {}: {}".format(
                     jfile, str(e)))
                 msg = {"Error when parsing logs. Please investigate"}
-                found_reason = False
-                tags.add("unknown")
+                message['reason'] = False
+                message['tags'].add("unknown")
     if not msg:
         log.debug("No patterns in job files {}".format(job))
         msg = {"Reason was NOT FOUND. Please investigate"}
-        found_reason = False
-        tags.add("unknown")
-    templ = ("{date}\t"
-             "{job_type:38}\t"
-             "{delim}\t"
-             "{msg:60}\t"
-             "{delim}\t"
-             "log: {log_url}")
-    text = templ.format(
+        message['reason'] = False
+        message['tags'].add("unknown")
+    message['msg'] = msg
+    message['text'] = templ.format(
         msg=" ".join(sorted(msg)),
-        delim="||" if found_reason else "XX",
+        delim="||" if message['reason'] else "XX",
         date=job.datetime,
         job_type=job.name,
         log_url=job.log_url
     )
-    message = {
-        "text": text,
-        "tags": tags,
-        "msg": msg,
-        "reason": found_reason,
-        "job": job,
-        "periodic": "periodic" in job.name,
-    }
     return message

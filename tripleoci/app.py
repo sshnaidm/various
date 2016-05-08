@@ -3,6 +3,7 @@ import os
 import pickle
 
 from watchcat import meow
+from utils import top, statistics
 
 
 def main():
@@ -22,15 +23,15 @@ def main():
 
     work_dir = os.path.dirname(__file__)
     ci_data = meow(limit=None,
-                       days=7,
+                       days=8,
                        job_type=None,
                        exclude="gate-tripleo-ci-f22-containers",
                        down_path=os.path.join(os.environ["HOME"], "ci_status"))
 
-    periodic_data = meow(limit=50,
-                         days=None,
+    periodic_data = meow(limit=None,
+                         days=7,
                          job_type=None,
-                         exclude="gate-tripleo-ci-f22-containers",
+                         exclude=None,
                          down_path=os.path.join(os.environ["HOME"],
                                                 "ci_status"),
                          periodic=True)
@@ -38,12 +39,16 @@ def main():
     with open("/tmp/ci_data_dump", "w") as g:
         pickle.dump(ci_data, g)
     with open("/tmp/periodic_data_dump", "w") as g:
-        pickle.dump(ci_data, g)
+         pickle.dump(periodic_data, g)
     # For debug mode
     # with open("/tmp/ci_data_dump", "rb") as g:
     #     ci_data = pickle.load(g)
     # with open("/tmp/periodic_data_dump", "rb") as g:
-    #     periodic_data = pickle.load(g)
+    #    periodic_data = pickle.load(g)
+
+    errors_top = top(ci_data)
+    stats, per_stats = statistics(ci_data), statistics(
+        periodic_data, periodic=True)
 
     JINJA_ENVIRONMENT = jinja2.Environment(
         loader=jinja2.FileSystemLoader(work_dir),
@@ -53,9 +58,13 @@ def main():
     html = template.render({
         "ci": by_job_type(list(ci_data)),
         "periodic": by_job_type(list(periodic_data)),
+        'ci_stats': stats,
+        'periodic_stats': per_stats,
+        "errors_top": errors_top,
     })
     with open(os.path.join(work_dir, "index.html"), "w") as f:
-        f.write(html)
+        #f.write(html.encode('utf-8'))
+        f.write(html.encode('ascii', 'ignore').decode('ascii'))
 
 
 if __name__ == '__main__':

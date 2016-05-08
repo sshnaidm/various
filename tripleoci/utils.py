@@ -1,4 +1,5 @@
 import contextlib
+import datetime
 import gzip
 import json
 import lzma
@@ -7,6 +8,7 @@ import paramiko
 import requests
 import tarfile
 import time
+from collections import Counter
 from requests import ConnectionError
 
 import config
@@ -53,13 +55,18 @@ class Gerrit(object):
         Gerrit class, it connects to upstream Gerrit and run queries.
         It downloads all info about patches from given projects.
     """
-    def __init__(self):
+    def __init__(self, period=None):
         self.key_path = os.path.join(DIR, "robi_id_rsa")
         self.ssh = None
+        self.period = period
 
     def get_project_patches(self, projects):
         def filtered(x):
             return [json.loads(i) for i in x.splitlines() if 'project' in i]
+        def calc_date(x):
+            return (
+                datetime.datetime.today() - datetime.timedelta(days=x)
+            ).date().strftime("%Y-%m-%d")
 
         data = []
 
@@ -71,6 +78,9 @@ class Gerrit(object):
                         'limit: {limit} '
                         '--patch-sets '
                         '--current-patch-set')
+        if self.period:
+            cmd_template += ' after:"{date}"'.format(
+                date=calc_date(self.period))
         for proj in projects:
             # Start SSH for every project from scratch because SSH timeout
             self.ssh = SSH(host=config.GERRIT_HOST,
@@ -86,7 +96,7 @@ class Gerrit(object):
                 out, err = self.ssh.exe(command)[1:]
                 if err:
                     log.error("Error with ssh:{}".format(err))
-                data += filtered(out)
+                data += filtered(out) if out else []
             self.ssh.close()
             # Let's not ddos Gerrit
             time.sleep(1)
@@ -247,3 +257,48 @@ class JobFile(object):
             return self.file_path
         else:
             return None
+
+
+def top(data):
+    msgs = [j for i in data for j in i['msg'] if
+            "info" not in i['tags'] and
+            j != 'Reason was NOT FOUND. Please investigate']
+    xtop = Counter(msgs)
+    return xtop.most_common()
+
+def statistics(data, periodic=False):
+    def _get_stats(arr):
+        res = {'job_stats':{}}
+        if not arr:
+            return {}
+        for job_data in arr:
+            name = job_data['job'].name
+            res['job_stats'][name] = zeroed
+            job_tags = [j for i in arr if i['job'].name == name
+                        for j in i['tags']]
+            res['job_stats'][name] = {
+                k: v for k, v in Counter(job_tags).items() if k}
+            res['job_stats'][name]['len'] = len([i for i in arr if i['job'].name == name])
+        return res
+
+    zeroed = {'infra': 0, 'len': 0, 'unknown': 0, 'code': 0}
+    tags = [j for i in data for j in i['tags']]
+    all_stats = {k: v for k, v in Counter(tags).items() if k}
+    all_stats['len'] = len(data)
+    stat_dict = {'all_stats': all_stats}
+    stat_dict['all_times'] = _get_stats(data)
+    if not periodic:
+        today = datetime.date.today()
+        stat_dict['today'] = _get_stats(
+            [i for i in data if i['job'].ts.date() == today])
+        yesterday = (
+            datetime.datetime.today() - datetime.timedelta(days=1)
+        ).date()
+        stat_dict['yesterday'] = _get_stats(
+            [i for i in data if i['job'].ts.date() == yesterday])
+    week = [
+        (datetime.datetime.today() - datetime.timedelta(days=i)
+         ).date() for i in range(7)]
+    stat_dict['week'] = _get_stats(
+        [i for i in data if i['job'].ts.date() in week])
+    return stat_dict

@@ -210,9 +210,17 @@ PATTERNS = {
         },
     ],
 
-    '/logs/postci.txt.gz': [
+    '/logs/postci.log': [
         {
             "id": 201,
+            "pattern": puppet_re,
+            "msg": "Puppet {} FAIL.",
+            "tag": "code",
+        },
+    ],
+    '/logs/postci.txt.gz': [
+        {
+            "id": 202,
             "pattern": puppet_re,
             "msg": "Puppet {} FAIL.",
             "tag": "code",

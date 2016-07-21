@@ -2,12 +2,12 @@ import contextlib
 import datetime
 import gzip
 import json
-import lzma
 import os
 import paramiko
 import requests
 import tarfile
 import time
+from backports import lzma
 from collections import Counter
 from requests import ConnectionError
 

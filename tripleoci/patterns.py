@@ -28,7 +28,7 @@ PATTERNS = {
             "id": 2,
             "pattern": "Stack overcloud CREATE_FAILED",
             "msg": "Overcloud stack: FAILED.",
-            "tag": "",
+            "tag": "info",
         },
         {
             "id": 3,

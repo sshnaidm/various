@@ -6,7 +6,7 @@ from analysis import analyze
 from periodic import Periodic
 from patches import Patch
 from filters import Filter
-
+from __future__ import print_function
 
 def meow(days=None,
          dates=None,

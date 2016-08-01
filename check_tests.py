@@ -6,7 +6,10 @@ import smtplib
 import sys
 from email.mime.text import MIMEText
 from six.moves.urllib.parse import urljoin
+from six.moves.html_parser import HTMLParser
 
+
+DEBUG = True
 JOBS = [
     "periodic-tripleo-ci-centos-7-ovb-ha-tempest",
 ]
@@ -16,6 +19,8 @@ HREF = re.compile('href="([^"]+)"')
 JOBRE = re.compile('[a-z0-9]{7}/')
 TESTRE = re.compile('(tempest\.[^ \(\)]+)')
 TIMEST = re.compile('(\d{4}-\d{2}-\d{2} \d{2}:\d{2}):\d{2}\.\d+ \|')
+TITLE = re.compile('<title>(.*?)</title>')
+
 FAILED = "... FAILED"
 OK = "... ok"
 ERROR = "... ERROR"
@@ -24,15 +29,21 @@ MAIL_FROM = "sshnaidm@redhat.com"
 RH_SMTP = "int-mx.corp.redhat.com"
 
 TESTS = {
-    'tempest.scenario.test_volume_boot_pattern.*': 'http://bugzilla.redhat.com/1272289',
-    'tempest.api.identity.*v3.*': 'https://bugzilla.redhat.com/1266947',
-    '.*test_external_network_visibility': 'https://bugs.launchpad.net/tripleo/+bug/1577769',
-    'tempest.api.data_processing.*': 'https://bugs.launchpad.net/tripleo/+bug/1592284'
+    'tempest.scenario.test_volume_boot_pattern.*':
+        'http://bugzilla.redhat.com/1272289',
+    'tempest.api.identity.*v3.*':
+        'https://bugzilla.redhat.com/1266947',
+    '.*test_external_network_visibility':
+        'https://bugs.launchpad.net/tripleo/+bug/1577769',
+    'tempest.api.data_processing.*':
+        'https://bugs.launchpad.net/tripleo/+bug/1592284'
 }
+
 
 def die(msg):
     print(msg)
     sys.exit(1)
+
 
 def get_html(url):
     try:
@@ -51,11 +62,11 @@ def get_index(job):
     res = get_html(url)
     if res is None or not res.ok:
         die("Failed to get job URL %s" % url)
-    body = res.content
+    body = res.content.decode() if res.content else ''
     if not body:
         die("No content in periodic index %s" % url)
     with open("/tmp/mytest", "w") as f:
-        f.write(res.content)
+        f.write(body)
     hrefs = [HREF.search(l).group(1)
              for l in body.splitlines() if HREF.search(l)]
     links = ["/".join((url, link)) for link in hrefs if JOBRE.match(link)]
@@ -72,18 +83,15 @@ def get_console(job_url):
             return False
         else:
             return True
+
     def _get_date(c):
         text = c.splitlines()
-        line = ''
         # find last line with timestamp
         for l in text[::-1]:
             if TIMEST.match(l):
-                line = l
-                break
-        else:
-            return None
-        return datetime.datetime.strptime(TIMEST.search(line).group(1),
-                                          "%Y-%m-%d %H:%M")
+                return datetime.datetime.strptime(TIMEST.search(l).group(1),
+                                                  "%Y-%m-%d %H:%M")
+        return None
 
     url = urljoin(job_url, "console.html.gz")
     res = get_html(url)
@@ -92,19 +100,22 @@ def get_console(job_url):
         # Try again
         res = get_html(url)
         if not _good_result(res):
-            return (None, None)
+            return (None, None, None)
     elif int(res.status_code) == 404:
         url = urljoin(job_url, "console.html")
         res = get_html(url)
         if not _good_result(res):
-        # Try again
+            # Try again
             res = get_html(url)
             if not _good_result(res):
                 print("Error getting console %s" % url)
-                return (None, None)
-    console = res.content
+                return (None, None, None)
+    console = res.content.decode('utf-8')
+    # with open("/tmp/console", "wt") as f:
+    #    f.write(console)
     date = _get_date(console)
     return console, date, url
+
 
 def get_tests_results(console):
     ''' Get results of tests from console'''
@@ -116,6 +127,7 @@ def get_tests_results(console):
               for l in console.splitlines() if ERROR in l]
     return failed, ok, errors
 
+
 def compare_tests(failures):
     ''' Detect fails covered by bugs and new'''
     covered, new = [], []
@@ -126,24 +138,67 @@ def compare_tests(failures):
     new = [fail for fail in failures if fail not in covered]
     return covered, new
 
-def check_bz_bug():
-    ''' Return status of a bug in BZ'''
-    pass
 
-def check_lp_bug():
+def check_bug(b):
+    ''' Generic check bug status and name'''
+    if 'bugzilla.redhat.com' in b:
+        return check_bz_bug(b)
+    elif 'bugs.launchpad.net' in b:
+        return check_lp_bug(b)
+
+
+def check_bz_bug(b):
+    ''' Return status of a bug in BZ'''
+    html = get_html(b)
+    if html:
+        text = html.content.decode('utf-8')
+        name = TITLE.search(text).group(1) if TITLE.search(text) else ''
+        h = HTMLParser()
+        name = h.unescape(name)
+    else:
+        name = ''
+    return name, None
+
+
+def check_lp_bug(b):
     ''' Return status of a bug in Launchpad'''
-    pass
+    html = get_html(b)
+    if html:
+        text = html.content.decode('utf-8')
+        name = TITLE.search(text).group(1) if TITLE.search(text) else ''
+    else:
+        name = ''
+    return name, None
+
+
+def nice_print_bugs(bugs):
+    text = ""
+    for i in bugs:
+        name, status = check_bug(i)
+        text += "%s (%s)\n" % (name, i)
+    return text
+
 
 def refresh_bugs():
     ''' Refresh status of bugs'''
     pass
 
+
 def stats(d):
     ''' Get statistics about test failures'''
     return d
 
+
+def dummy(subj, body, addresses=RECPTO):
+    print("from %s to %s" % (MAIL_FROM, ",".join(addresses)))
+    print(subj)
+    print(body)
+
+
 def mail(subj, body, addresses=RECPTO):
     ''' Send mail'''
+    if DEBUG:
+        return dummy(subj, body, addresses=RECPTO)
     msg = MIMEText(body)
     msg['Subject'] = subj
     msg['From'] = MAIL_FROM
@@ -151,6 +206,7 @@ def mail(subj, body, addresses=RECPTO):
     s = smtplib.SMTP(RH_SMTP)
     s.sendmail(MAIL_FROM, addresses, msg.as_string())
     s.quit()
+
 
 def send_unexpected_failure(last):
     ''' Send mail with unexpected failure'''
@@ -186,20 +242,27 @@ please check: %s
             body="""
 Hi, dear mail recipients,
 in last tests run we have a few tests that failed, and which are
-not covered by bugs, it could be flaky test or new bug,
+not covered by bugs, it could be unstable test or new bug,
 please check: %s
 Not covered tests:
 
 %s
-            """ % (last['link'], "\n".join(last['new']))
+
+Bugs that are opened:
+%s
+
+            """ % (last['link'],
+                   "\n".join(last['new']),
+                   nice_print_bugs(TESTS.values()))
         )
+
 
 def send_successful_report(last, nofail=False):
     ''' Send mail with success, no failures'''
     if nofail:
         mail(
             subj="All passed, no tests failed",
-                body="""
+            body="""
 Hi, dear mail recipients,
 in the last run nothing failed, all tests passed.
 please check: %s
@@ -208,17 +271,19 @@ please check: %s
     else:
         mail(
             subj="No new tests failed",
-                body="""
+            body="""
 Hi, dear mail recipients,
 in the last run only covered by bugs tests failed,
 please check: %s
-                """ % last['link']
+Bugs that are opened:
+%s
+                """ % (last['link'], nice_print_bugs(TESTS.values()))
         )
 
 
 def main():
     data = []
-    #bugs_status = refresh_bugs()
+    # bugs_status = refresh_bugs()
     for periodic_job in JOBS:
         index = get_index(periodic_job)
         for run in index:
@@ -245,7 +310,7 @@ def main():
     data = sorted(data, key=lambda x: x['date'])
     last = data[-1]
     if last.get('new') or not last.get('run'):
-        #some_stats = stats(d)
+        # some_stats = stats(d)
         send_report_with_failures(last)
     elif last.get('failed') and not last.get('new'):
         send_successful_report(last=last)

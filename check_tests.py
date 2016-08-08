@@ -9,7 +9,7 @@ from six.moves.urllib.parse import urljoin
 from six.moves.html_parser import HTMLParser
 
 
-DEBUG = True
+DEBUG = False
 JOBS = [
     "periodic-tripleo-ci-centos-7-ovb-ha-tempest",
 ]
@@ -24,7 +24,7 @@ TITLE = re.compile('<title>(.*?)</title>')
 FAILED = "... FAILED"
 OK = "... ok"
 ERROR = "... ERROR"
-RECPTO = ["sshnaidm@redhat.com"]
+RECPTO = ["sshnaidm@redhat.com", "whayutin@redhat.com"]
 MAIL_FROM = "sshnaidm@redhat.com"
 RH_SMTP = "int-mx.corp.redhat.com"
 
@@ -281,32 +281,34 @@ Bugs that are opened:
         )
 
 
-def main():
+def main(upstream=True, downstream=False):
     data = []
     # bugs_status = refresh_bugs()
-    for periodic_job in JOBS:
-        index = get_index(periodic_job)
-        for run in index:
-            console, date, link = get_console(run)
-            if not console or not date:
-                continue
-            fails, ok, errors = get_tests_results(console)
-            d = {
-                'run': True,
-                'date': date,
-                'link': link
-            }
-            if fails:
-                covered, new = compare_tests(fails)
-                d.update({
-                    'failed': fails,
-                    'covered': covered,
-                    'new': new,
-                    'errors': errors,
-                })
-            elif not fails and not ok and not errors:
-                d['run'] = False
-            data.append(d)
+    if upstream:
+        for periodic_job in JOBS:
+            index = get_index(periodic_job)
+            for run in index:
+                console, date, link = get_console(run)
+                if not console or not date:
+                    continue
+                fails, ok, errors = get_tests_results(console)
+                d = {
+                    'run': True,
+                    'date': date,
+                    'link': link
+                }
+                if fails:
+                    covered, new = compare_tests(fails)
+                    d.update({
+                        'failed': fails,
+                        'covered': covered,
+                        'new': new,
+                        'errors': errors,
+                    })
+                elif not fails and not ok and not errors:
+                    d['run'] = False
+                data.append(d)
+
     data = sorted(data, key=lambda x: x['date'])
     last = data[-1]
     if last.get('new') or not last.get('run'):

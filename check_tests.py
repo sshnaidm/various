@@ -191,7 +191,7 @@ def stats(d):
 
 def dummy(subj, body, addresses=RECPTO):
     print("from %s to %s" % (MAIL_FROM, ",".join(addresses)))
-    print(subj)
+    print("[Tempest report] " + subj)
     print(body)
 
 
@@ -200,7 +200,7 @@ def mail(subj, body, addresses=RECPTO):
     if DEBUG:
         return dummy(subj, body, addresses=RECPTO)
     msg = MIMEText(body)
-    msg['Subject'] = subj
+    msg['Subject'] = "[Tempest report] " + subj
     msg['From'] = MAIL_FROM
     msg['To'] = ",".join(addresses)
     s = smtplib.SMTP(RH_SMTP)

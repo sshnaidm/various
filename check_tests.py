@@ -24,6 +24,7 @@ TITLE = re.compile('<title>(.*?)</title>')
 FAILED = "... FAILED"
 OK = "... ok"
 ERROR = "... ERROR"
+SKIPPED = "... SKIPPED"
 RECPTO = ["sshnaidm@redhat.com", "whayutin@redhat.com"]
 MAIL_FROM = "sshnaidm@redhat.com"
 RH_SMTP = "int-mx.corp.redhat.com"
@@ -35,8 +36,6 @@ TESTS = {
         'https://bugzilla.redhat.com/1266947',
     '.*test_external_network_visibility':
         'https://bugs.launchpad.net/tripleo/+bug/1577769',
-    'tempest.api.data_processing.*':
-        'https://bugs.launchpad.net/tripleo/+bug/1592284'
 }
 
 
@@ -125,6 +124,8 @@ def get_tests_results(console):
           for l in console.splitlines() if OK in l]
     errors = [TESTRE.search(l).group(1)
               for l in console.splitlines() if ERROR in l]
+    all_skipped = [TESTRE.search(l).group(1)
+              for l in console.splitlines() if SKIPPED in l]
     return failed, ok, errors
 
 

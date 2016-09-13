@@ -298,7 +298,7 @@ def main(upstream=True, downstream=False):
                     'date': date,
                     'link': link
                 }
-                if fails:
+                if fails or errors:
                     covered, new = compare_tests(fails)
                     d.update({
                         'failed': fails,
@@ -306,6 +306,8 @@ def main(upstream=True, downstream=False):
                         'new': new,
                         'errors': errors,
                     })
+                elif ok:
+                    d['ok'] = ok
                 elif not fails and not ok and not errors:
                     d['run'] = False
                 data.append(d)

@@ -71,7 +71,7 @@ def meow(days=None,
 def main():
     for m in meow(limit=10, periodic=True):
         #print m["text"]
-        print m
+        print
 
 
 if __name__ == "__main__":

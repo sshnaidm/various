@@ -4,6 +4,9 @@ NAME=${1:-"$USER"}
 RHCL="1"
 JUMPHOST=66.187.229.211
 
+bold=$(tput bold)
+normal=$(tput sgr0)
+
 function wait_for_ready_undercloud() {
 is_ready=$(nova list | grep ${NAME}-undercloud | grep ACTIVE)
 run_timeout=0
@@ -71,12 +74,26 @@ NODEPOOL_AZ=
 EOK
 }
 
+function check_binary {
+    local binary="$1"
+    command -v "$binary" >/dev/null 2>&1
+    if [[ $? != 0 ]]; then
+        echo "This script requires ${bold}nova${normal} and ${bold}glance${normal} clients to be installed."
+        echo "You need to install $binary client before running this script"
+        exit 1
+    fi
+}
+
 # Destroy everything
 
 source ~/rh${RHCL}devrc || {
 echo "Please provide ~/rh${RHCL}devrc with cloud credentials for tripleo-user tenant";
 exit 1
 }
+
+check_binary nova
+check_binary glance
+
 ssh centos@$JUMPHOST -A "./tripleo-ci/scripts/te-broker/destroy-env ${NAME}"
 nova delete ${NAME}-undercloud
 wait_for_deleted_undercloud

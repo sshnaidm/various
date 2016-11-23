@@ -99,9 +99,9 @@ nova delete ${NAME}-undercloud
 wait_for_deleted_undercloud
 
 # Start everything
-
-last_image=$(glance image-list --sort-key name | grep template-centos-7 | head -1 | awk {'print $4'})
-nova boot --config-drive=true --image ${last_image} --flavor undercloud --nic net-name=private --key-name default ${NAME}-undercloud
+# Don't use last image, it could be in uploading status yet
+before_last_image=$(glance image-list --sort-key name | grep template-centos-7 | head -2 | tail -1 | awk {'print $4'})
+nova boot --config-drive=true --image ${before_last_image} --flavor undercloud --nic net-name=private --key-name default ${NAME}-undercloud
 wait_for_ready_undercloud
 
 undercloud_uuid=$(nova list --fields "name" | grep ${NAME}-undercloud | awk {'print $2'})

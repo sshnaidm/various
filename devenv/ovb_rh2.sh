@@ -134,6 +134,7 @@ sudo chown jenkins -R /opt/stack/new ;
 git clone https://git.openstack.org/openstack-infra/tripleo-ci /opt/stack/new/tripleo-ci ;
 cd /opt/stack/new/tripleo-ci/ ;
 cp ~/prepare_patch.sh . ;
+sudo yum install -y https://kojipkgs.fedoraproject.org//packages/fpaste/0.3.7.4/1.fc21/noarch/fpaste-0.3.7.4-1.fc21.noarch.rpm;
 
 echo "TE_DATAFILE=/tmp/env.json OVERRIDE_ZUUL_BRANCH= ZUUL_BRANCH=master WORKSPACE=/tmp DEVSTACK_GATE_TIMEOUT=200 TOCI_JOBTYPE= ./toci_gate_test.sh | tee general.log" > run_clean.sh
 echo "TE_DATAFILE=/tmp/env.json OVERRIDE_ZUUL_BRANCH= ZUUL_BRANCH=master WORKSPACE=/tmp DEVSTACK_GATE_TIMEOUT=200 TOCI_JOBTYPE=periodic-ovb-nonha-test ./toci_gate_test.sh | tee general.log" > run_periodic.sh

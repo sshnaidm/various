@@ -100,7 +100,7 @@ wait_for_deleted_undercloud
 
 # Start everything
 # Don't use last image, it could be in uploading status yet
-before_last_image=$(glance image-list --sort-key name | grep template-centos-7 | head -2 | tail -1 | awk {'print $4'})
+before_last_image=$(glance image-list --sort-key name | grep centos-7 | head -2 | tail -1 | awk {'print $4'})
 nova boot --config-drive=true --image ${before_last_image} --flavor undercloud --nic net-name=private --key-name default ${NAME}-undercloud
 wait_for_ready_undercloud
 

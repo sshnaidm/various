@@ -128,6 +128,12 @@ scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no ~/testenv.json r
 scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /tmp/provider root@$undercloud_ip:/etc/nodepool/
 scp -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no /tmp/prepare_patch.sh jenkins@$undercloud_ip:~/
 ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@$undercloud_ip <<EOT
+sudo yum clean all;
+sudo yum update -y;
+sudo reboot
+EOT
+sleep 150
+ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no root@$undercloud_ip <<EOT
 su - jenkins
 sudo mkdir -p /opt/stack/new ;
 sudo chown jenkins -R /opt/stack/new ;

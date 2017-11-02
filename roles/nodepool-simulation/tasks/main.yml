@@ -1,0 +1,154 @@
+---
+
+- name: Create provider dir
+  file:
+    path: /etc/nodepool
+    state: directory
+    owner: "{{ ansible_user }}"
+  become: true
+
+- name: Create sudnodes files 1
+  copy:
+    dest: /etc/nodepool/provider
+    content: |
+      NODEPOOL_PROVIDER=rax-dfw
+      NODEPOOL_CLOUD=rax
+      NODEPOOL_REGION=DFW
+      NODEPOOL_AZ=
+
+- name: Create provider dir
+  file:
+    path: /etc/ci
+    state: directory
+    owner: "{{ ansible_user }}"
+  become: true
+
+
+- name: Create nodepool files 1.5
+  template:
+    dest: /etc/ci/mirror_info.sh
+    src: mirror_info.sh
+
+- name: Create sudnodes files 2
+  copy:
+    dest: /etc/nodepool/node_private
+    content: |
+      {{ hostvars[inventory_hostname].subnode_private_ip}}
+
+- name: Create sudnodes files 2.1
+  copy:
+    dest: /etc/nodepool/primary_node_private
+    content: |
+      {{ hostvars['subnode-0'].subnode_private_ip}}
+
+- name: Create sudnodes files 3
+  copy:
+    dest: /etc/nodepool/sub_nodes
+    content: |
+      {{ hostvars[item].subnode_public_ip}}
+  with_inventory_hostnames:
+    - subnodes:!subnode-0
+
+- name: Create sudnodes files 4
+  copy:
+    dest: /etc/nodepool/sub_nodes_private
+    content: |
+      {{ hostvars[item].subnode_private_ip}}
+  with_inventory_hostnames:
+    - subnodes:!subnode-0
+
+- name: Create keys
+  shell: >
+    if [[ ! -e /etc/nodepool/id_rsa ]]; then
+      ssh-keygen -N "" -f /etc/nodepool/id_rsa;
+      chmod 600  /etc/nodepool/id_rsa;
+    fi
+
+- name: Set primary public key on all hosts
+  shell: cat /etc/nodepool/id_rsa.pub
+  register: primary_key
+  #delegate_to: subnode-0
+  when: inventory_hostname == "subnode-0"
+
+- name: Make sure .ssh exists
+  file:
+    dest: ~/.ssh/
+    state: directory
+
+- name: Add primary key
+  lineinfile:
+    dest: ~/.ssh/authorized_keys
+    state: present
+    line: "{{ hostvars['subnode-0'].primary_key.stdout }}"
+
+- name: Create repos
+  template:
+    dest: "/etc/yum.repos.d/{{ item }}"
+    src: "{{ item }}"
+  with_items:
+    - CentOS-Ceph-Jewel.repo
+    - CentOS-OpenStack-ocata.repo
+    - CentOS-QEMU-EV.repo
+    - epel.repo
+    - epel-testing.repo
+  become: true
+
+- name: Scan keys
+  shell: |
+    if  ! grep -q {{ hostvars[item].subnode_public_ip }} /etc/ssh/ssh_known_hosts ; then
+      ssh-keyscan {{ hostvars[item].subnode_public_ip }} >> /etc/ssh/ssh_known_hosts
+    fi
+    if  ! grep -q {{ hostvars[item].subnode_private_ip }} /etc/ssh/ssh_known_hosts ; then
+      ssh-keyscan {{ hostvars[item].subnode_private_ip }} >> /etc/ssh/ssh_known_hosts
+    fi
+  with_inventory_hostnames:
+    - subnodes
+  become: true
+
+- name: Install packages
+  yum:
+    name: "{{ item }}"
+    state: latest
+  with_items:
+    - git
+    - unbound
+  become: true
+
+- name: start services
+  service:
+    name: unbound
+    state: started
+  become: true
+
+- name: Create repos dir
+  file:
+    path: /opt/stack/new
+    state: directory
+    owner: "{{ ansible_user }}"
+  become: true
+
+- name: Clone repos
+  shell: >
+    if [[ ! -d /opt/stack/new/{{ item.split('/')[-1].split('.')[0] }} ]]; then
+      git clone {{ item }};
+    fi
+  with_items:
+    - https://git.openstack.org/openstack/tripleo-quickstart.git
+    - https://git.openstack.org/openstack/tripleo-quickstart-extras.git
+    - https://git.openstack.org/openstack-infra/tripleo-ci.git
+    #- https://git.openstack.org/openstack-dev/devstack.git
+    #- https://git.openstack.org/openstack-infra/devstack-gate.git
+  args:
+    chdir:  /opt/stack/new/
+
+
+- name: Set some env vars
+  lineinfile:
+    dest: /etc/environment
+    state: present
+    line: "{{ item }}"
+  with_items:
+    - "WORKSPACE=/tmp"
+    - "DEVSTACK_GATE_TIMEOUT=300"
+    - "REMAINING_TIME=300"
+  become: true

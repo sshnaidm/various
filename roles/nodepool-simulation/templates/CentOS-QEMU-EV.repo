@@ -1,0 +1,16 @@
+# CentOS-QEMU-EV.repo
+#
+# Please see http://wiki.centos.org/SpecialInterestGroup/Virtualization for more
+# information
+
+[centos-qemu-ev]
+name=CentOS-$releasever - QEMU EV
+baseurl=http://mirror.centos.org/centos/$releasever/virt/$basearch/kvm-common/
+gpgcheck=0
+enabled=1
+
+[centos-qemu-ev-test]
+name=CentOS-$releasever - QEMU EV Testing
+baseurl=http://buildlogs.centos.org/centos/$releasever/virt/$basearch/kvm-common/
+gpgcheck=0
+enabled=0

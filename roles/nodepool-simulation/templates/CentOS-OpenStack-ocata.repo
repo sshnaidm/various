@@ -1,0 +1,37 @@
+#
+# Please see http://wiki.centos.org/SpecialInterestGroup/Cloud for more
+# information
+
+[centos-openstack-ocata]
+name=CentOS-7 - OpenStack ocata
+baseurl=http://mirror.centos.org/centos/7/cloud/$basearch/openstack-ocata/
+gpgcheck=0
+enabled=1
+exclude=sip,PyQt4
+
+[centos-openstack-ocata-test]
+name=CentOS-7 - OpenStack ocata Testing
+baseurl=http://buildlogs.centos.org/centos/7/cloud/$basearch/openstack-ocata/
+gpgcheck=0
+enabled=0
+exclude=sip,PyQt4
+
+[centos-openstack-ocata-debuginfo]
+name=CentOS-7 - OpenStack ocata - Debug
+baseurl=http://debuginfo.centos.org/centos/7/cloud/$basearch/
+gpgcheck=0
+enabled=0
+exclude=sip,PyQt4
+
+[centos-openstack-ocata-source]
+name=CentOS-7 - OpenStack ocata - Source
+baseurl=http://vault.centos.org/centos/7/cloud/Source/openstack-ocata/
+gpgcheck=0
+enabled=0
+exclude=sip,PyQt4
+
+[rdo-trunk-ocata-tested]
+name=OpenStack ocata Trunk Tested
+baseurl=https://trunk.rdoproject.org/centos7-ocata/current-passed-ci/
+gpgcheck=0
+enabled=0

@@ -136,10 +136,12 @@
     - https://git.openstack.org/openstack/tripleo-quickstart.git
     - https://git.openstack.org/openstack/tripleo-quickstart-extras.git
     - https://git.openstack.org/openstack-infra/tripleo-ci.git
-    #- https://git.openstack.org/openstack-dev/devstack.git
-    #- https://git.openstack.org/openstack-infra/devstack-gate.git
+    - https://git.openstack.org/openstack-dev/devstack.git
+    - https://git.openstack.org/openstack-infra/devstack-gate.git
   args:
     chdir:  /opt/stack/new/
+  tags:
+    - one
 
 
 - name: Set some env vars

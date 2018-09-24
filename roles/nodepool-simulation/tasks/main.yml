@@ -95,12 +95,11 @@
 
 - name: Scan keys
   shell: |
-    if  ! grep -q {{ hostvars[item].subnode_public_ip }} /etc/ssh/ssh_known_hosts ; then
-      ssh-keyscan {{ hostvars[item].subnode_public_ip }} >> /etc/ssh/ssh_known_hosts
-    fi
-    if  ! grep -q {{ hostvars[item].subnode_private_ip }} /etc/ssh/ssh_known_hosts ; then
-      ssh-keyscan {{ hostvars[item].subnode_private_ip }} >> /etc/ssh/ssh_known_hosts
-    fi
+    for key in {{ hostvars[item].subnode_public_ip }} {{ hostvars[item].subnode_private_ip }}; do
+      if ! grep -q $key /etc/ssh/ssh_known_hosts ; then
+        ssh-keyscan $key >> /etc/ssh/ssh_known_hosts
+      fi
+    done
   with_inventory_hostnames:
     - subnodes
   become: true
@@ -118,7 +117,10 @@
   service:
     name: unbound
     state: started
+    enabled: yes
   become: true
+  tags:
+    - one
 
 - name: Create repos dir
   file:
@@ -140,9 +142,6 @@
     - https://git.openstack.org/openstack-infra/devstack-gate.git
   args:
     chdir:  /opt/stack/new/
-  tags:
-    - one
-
 
 - name: Set some env vars
   lineinfile:
@@ -153,4 +152,30 @@
     - "WORKSPACE=/tmp"
     - "DEVSTACK_GATE_TIMEOUT=300"
     - "REMAINING_TIME=300"
+    - "EXTRA_VARS=' --extra-vars vxlan_mtu=1400'"
   become: true
+
+- name: Update packages
+  yum:
+    name: '*'
+    state: latest
+  become: true
+
+- name: Reboot hosts
+  shell: sleep 2 && shutdown -r now
+  async: 1
+  poll: 0
+  ignore_errors: true
+  become: true
+  tags:
+    - one
+
+- name: Wait a little
+  pause: seconds=30
+  tags:
+    - one
+
+- name: Wait for provisioned hosts to become reachable
+  local_action: wait_for host="{{ hostvars[inventory_hostname].subnode_public_ip }}" port="{{ ansible_port }}" delay=5 state=started connect_timeout=10 timeout=180
+  tags:
+    - one

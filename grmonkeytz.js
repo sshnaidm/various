@@ -1,6 +1,6 @@
 // ==UserScript==
 // @name     _Convert displayed times from browsers timezone to UTC
-// @match    *://review\.openstack\.org/*
+// @include  /^https?://review\.openstack\.org/(#/c/)?\d*?/?(\d*)?/?$/
 // @require  https://ajax.googleapis.com/ajax/libs/jquery/2.1.0/jquery.min.js
 // @require  https://gist.github.com/raw/2625891/waitForKeyElements.js
 // @require  https://momentjs.com/downloads/moment.min.js

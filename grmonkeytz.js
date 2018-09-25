@@ -16,9 +16,22 @@ const desiredTimezone   = "Etc/UTC";  // new timezone
 waitForKeyElements ("div.com-google-gerrit-client-change-Message_BinderImpl_GenCss_style-date", convertTimezone); // installed script line
 
 function convertTimezone (jNode) {
-    var timeStr     = jNode.text ().trim ();  // expected like "8:00 PM ET"
-    var origTime    = moment.tz (timeStr, "MMM DD hh:mm", pagesTimezone);
-    var localTime   = origTime.tz (desiredTimezone).format ("MMM DD hh:mm z");
 
-    jNode.text (localTime);
+    var timeStr     = jNode.text ().trim ();  // expected like "8:00 PM ET"
+    // console.log(timeStr)
+    var origTime    = moment.tz (timeStr, "MMM DD hh:mm", pagesTimezone);
+    var todayTime   = moment.tz (timeStr, "hh:mm", pagesTimezone);
+    // console.log("today " + todayTime)
+    var localTime   = origTime.tz (desiredTimezone).format ("MMM DD hh:mm z");
+    var tTime   = todayTime.tz (desiredTimezone).format ("hh:mm z");
+    var sendTime=''
+    if (localTime == "Invalid date"){
+        sendTime = tTime
+    } else {
+        sendTime = localTime
+    }
+    // console.log("orig " + localTime)
+    // console.log("today " + tTime)
+
+    jNode.text (sendTime);
 }

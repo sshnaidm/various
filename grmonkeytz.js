@@ -16,9 +16,19 @@ const desiredTimezone   = "Etc/UTC";  // new timezone
 waitForKeyElements ("div.com-google-gerrit-client-change-Message_BinderImpl_GenCss_style-date", convertTimezone); // installed script line
 
 function convertTimezone (jNode) {
-    var timeStr     = jNode.text ().trim ();  // expected like "8:00 PM ET"
-    var origTime    = moment.tz (timeStr, "MMM DD hh:mm", pagesTimezone);
-    var localTime   = origTime.tz (desiredTimezone).format ("MMM DD hh:mm z");
 
-    jNode.text (localTime);
+  var timeStr = jNode.text ().trim ();
+  var origTime = moment.tz (timeStr, ["MMM DD hh:mm A", "hh:mm A", "MMM DD HH:mm", "HH:mm"], pagesTimezone);
+  var utcnow = moment.utc().format("MM DD");
+  var tsnow = moment.utc(origTime).format("MM DD")
+  var today = utcnow == tsnow;
+
+  if (timeStr.includes("AM") || timeStr.includes("PM")) {
+  	var utcTime   = (today)? origTime.tz (desiredTimezone).format ("hh:mm A z"):origTime.tz (desiredTimezone).format ("MMM DD hh:mm A z");
+  }
+  else {
+  	var utcTime   = (today)? origTime.tz (desiredTimezone).format ("HH:mm z"):origTime.tz (desiredTimezone).format ("MMM DD HH:mm z");
+  }
+
+    jNode.text (utcTime);
 }

@@ -213,6 +213,13 @@
       when:
         - haproxy is changed
 
+    - name: Stop and disable firewalld
+      become: true
+      ansible.builtin.systemd:
+        name: firewalld
+        state: stopped
+        enabled: false
+
     - name: Get OC client
       ansible.builtin.get_url:
         url: "{{ oc_url }}"

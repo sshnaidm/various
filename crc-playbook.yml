@@ -1,0 +1,237 @@
+---
+- hosts: all
+  gather_facts: false
+  vars:
+    crc_dir: ~/crc
+    crc_url: https://developers.redhat.com/content-gateway/rest/mirror/pub/openshift-v4/clients/crc/latest/crc-linux-amd64.tar.xz
+    oc_url: https://mirror.openshift.com/pub/openshift-v4/clients/ocp/latest/openshift-client-linux.tar.gz
+    crc_mem: 32768
+    crc_cpu: 8
+    disable_selinux: true
+    teardown: false
+    pull_secret_local_path: ~/pull_secret
+    pull_secret_path: /tmp/pull_secret
+    new_version: false
+
+  tasks:
+
+    - name: Collect only network facts
+      ansible.builtin.setup:
+        gather_subset:
+          - '!all'
+          - '!min'
+          - network
+
+    - name: Install required packages
+      become: true
+      package:
+        name:
+          - haproxy
+          - policycoreutils-python-utils
+          - jq
+
+    - name: Check what is SELINUX status
+      become: true
+      ansible.builtin.command: getenforce
+      register: selinux
+      changed_when: false
+
+    - name: Disable SELINUX if configured so
+      become: true
+      ansible.builtin.command: setenforce 0
+      when:
+        - disable_selinux|default(false)|bool
+        - selinux.stdout == 'Enforcing'
+
+    - name: Delete CRC directory if condfigured
+      ansible.builtin.file:
+        path: "{{ crc_dir }}"
+        state: absent
+      when:
+        - new_version|default(false)|bool
+
+    - name: Create CRC directory
+      ansible.builtin.file:
+        path: "{{ crc_dir }}"
+        state: directory
+
+    - name: Get CRC containers
+      ansible.builtin.get_url:
+        url: "{{ crc_url }}"
+        dest: "{{ crc_dir }}/crc-linux-amd64.tar.xz"
+      register: download
+
+    - name: Clean cache if downloaded new version
+      ansible.builtin.shell: rm -rf ~/.crc/cache/*
+      when:
+        - download is changed
+
+    - name: Unpack CRC containers file
+      ansible.builtin.command: "tar -xf crc-linux-amd64.tar.xz --strip-components 1"
+      args:
+        chdir: "{{ crc_dir }}"
+        creates: "{{ crc_dir }}/crc"
+
+    - name: Pre-setup variables
+      ansible.builtin.shell: |-
+        ./crc config set consent-telemetry no;
+        ./crc config set enable-cluster-monitoring true;
+      args:
+        chdir: "{{ crc_dir }}"
+
+    - name: Get CRC status
+      ansible.builtin.command: ./crc status
+      args:
+        chdir: "{{ crc_dir }}"
+      register: status
+      failed_when: false
+      changed_when: false
+
+    - name: Set status for stopped
+      set_fact:
+        crc_status: running
+
+    - name: Set status for absent
+      set_fact:
+        crc_status: absent
+      when:
+        - status.rc == 1
+
+    - name: Set status for stopped
+      set_fact:
+        crc_status: stopped
+      when:
+        - '"Stopped" in status.stdout'
+
+    - name: Stop if exists
+      ansible.builtin.command: ./crc stop
+      args:
+        chdir: "{{ crc_dir }}"
+      when:
+        - teardown|default(false)|bool
+        - crc_status == 'running'
+
+    - name: Delete if exists
+      ansible.builtin.command: ./crc delete --force
+      args:
+        chdir: "{{ crc_dir }}"
+      when:
+        - teardown|default(false)|bool
+        - crc_status != 'absent'
+
+    - name: Setup CRC
+      ansible.builtin.command: ./crc setup
+      args:
+        chdir: "{{ crc_dir }}"
+      when:
+         - crc_status != 'running'
+
+    - name: Copy pull secret file
+      copy:
+        src: "{{ pull_secret_local_path }}"
+        dest: "{{ pull_secret_path }}"
+        force: false
+
+    - name: Start CRC
+      ansible.builtin.command: "./crc start -m {{ crc_mem }} -c {{ crc_cpu }} --pull-secret-file {{ pull_secret_path }}"
+      args:
+        chdir: "{{ crc_dir }}"
+      when:
+         - crc_status != 'running'
+
+    - name: Generate haproxy config
+      copy:
+        dest: /tmp/haproxy.cfg
+        content: |
+          global
+                  debug
+
+          defaults
+                  log global
+                  mode    http
+                  timeout connect 5000
+                  timeout client 5000
+                  timeout server 5000
+
+          frontend apps
+              bind {{ ansible_facts['default_ipv4']['address'] }}:80
+              option tcplog
+              mode tcp
+              default_backend apps
+
+          backend apps
+              mode tcp
+              balance roundrobin
+              option ssl-hello-chk
+              server webserver1 192.168.130.11:80 check
+
+          frontend apps-https
+              bind {{ ansible_facts['default_ipv4']['address'] }}:443
+              option tcplog
+              mode tcp
+              default_backend apps-https
+
+          backend apps-https
+              mode tcp
+              balance roundrobin
+              option ssl-hello-chk
+              server webserver1 192.168.130.11:443 check
+
+          frontend api
+              bind {{ ansible_facts['default_ipv4']['address'] }}:6443
+              option tcplog
+              mode tcp
+              default_backend api
+
+          backend api
+              mode tcp
+              balance roundrobin
+              option ssl-hello-chk
+              server webserver1 192.168.130.11:6443 check
+
+    - name: Copy haproxy config
+      become: true
+      copy:
+        src: /tmp/haproxy.cfg
+        dest: /etc/haproxy/haproxy.cfg
+        remote_src: true
+      register: haproxy
+
+    - name: Start haproxy
+      become: true
+      ansible.builtin.systemd:
+        name: haproxy
+        state: started
+      when:
+        - haproxy is not changed
+
+    - name: Restart haproxy
+      become: true
+      ansible.builtin.systemd:
+        name: haproxy
+        state: restarted
+      when:
+        - haproxy is changed
+
+    - name: Get OC client
+      ansible.builtin.get_url:
+        url: "{{ oc_url }}"
+        dest: "{{ crc_dir }}/openshift-client-linux.tar.gz"
+
+    - name: Unpack OC client
+      ansible.builtin.unarchive:
+        src: "{{ crc_dir }}/openshift-client-linux.tar.gz"
+        dest: "{{ crc_dir }}"
+        remote_src: true
+        creates: "{{ crc_dir }}/oc"
+
+    - name: Discover kubadmin password
+      ansible.builtin.command: ./crc console --credentials
+      args:
+        chdir: "{{ crc_dir }}"
+      register: out
+      changed_when: false
+
+    - name: Print credentials
+      debug:
+        msg: "Credentials for CRC are:\n{{ out.stdout }}"

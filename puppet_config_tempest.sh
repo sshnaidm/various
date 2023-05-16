@@ -2,6 +2,7 @@
 # this is a first test
 # this is a second one
 # the third one hsh
+# tjrtktjktj
 
 wget http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
 openstack image create cirros_alt --public --container-format=bare --disk-format=qcow2 --property hypervisor_type=kvm --file cirros-0.3.4-x86_64-disk.img

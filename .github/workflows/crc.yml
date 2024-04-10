@@ -1,0 +1,256 @@
+name: CRC Tests
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  REGISTRY: quay.io
+  REGISTRY_LOCAL: localhost
+  TNF_IMAGE_NAME: testnetworkfunction/cnf-certification-test
+  TNF_IMAGE_TAG: unstable
+  OCT_IMAGE_NAME: testnetworkfunction/oct
+  OCT_IMAGE_TAG: latest
+  TNF_CONTAINER_CLIENT: docker
+  TNF_NON_INTRUSIVE_ONLY: false
+  TNF_ALLOW_PREFLIGHT_INSECURE: false
+  TNF_DISABLE_CONFIG_AUTODISCOVER: false
+  TNF_CONFIG_DIR: /tmp/tnf/config
+  TNF_OUTPUT_DIR: /tmp/tnf/output
+  TNF_SRC_URL: 'https://github.com/${{ github.repository }}'
+  TESTING_CMD_PARAMS: '-n host -i ${REGISTRY_LOCAL}/${TNF_IMAGE_NAME}:${TNF_IMAGE_TAG} -t ${TNF_CONFIG_DIR} -o ${TNF_OUTPUT_DIR}'
+  TNF_SMOKE_TESTS_LOG_LEVEL: trace
+  ON_DEMAND_DEBUG_PODS: false
+  TERM: xterm-color
+jobs:
+  smoke-tests:
+    name: Run Smoke Tests
+    runs-on: ubuntu-latest
+    env:
+      SHELL: /bin/bash
+      KUBECONFIG: '/home/runner/.crc/machines/crc/kubeconfig'
+      PFLT_DOCKERCONFIG: '/home/runner/.docker/config'
+      OCP_CLUSTER_OVERRIDE: 'true'
+
+    steps:
+      - name: Write temporary docker file
+        run: |
+          mkdir -p /home/runner/.docker
+          touch ${PFLT_DOCKERCONFIG}
+          echo '{ "auths": {} }' >> ${PFLT_DOCKERCONFIG}
+        if: runner.os == 'Linux'
+
+      # - name: Set up Go 1.21.6
+      #   uses: actions/setup-go@v4
+      #   with:
+      #     go-version: 1.21.6
+
+      - name: Install required packages for Linux
+        run: |
+          sudo apt-get update
+          sudo apt install qemu-kvm libvirt-daemon libvirt-daemon-system network-manager jq
+        if: runner.os == 'Linux'
+
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+          sudo apt-get update
+          sudo apt-get install -y libvirt-clients libvirt-daemon-system libvirt-daemon virtinst bridge-utils qemu qemu-system-x86
+          sudo usermod -a -G kvm,libvirt $USER
+          sudo adduser `id -un` libvirt
+      - name: reload the terminal to load the libvirt group
+        run: |
+          sudo -E bash -c 'exec su -l '$USER
+        if: runner.os == 'Linux'
+
+      - name: Check kvm
+        run: |
+          sudo apt-get install cpu-checker
+          egrep -c '(vmx|svm)' /proc/cpuinfo
+          kvm-ok
+
+      - name: Check if user is part of libvirt group
+        run: |
+          groups
+          sudo usermod -a -G libvirt $USER
+          newgrp libvirt
+          groups
+        if: runner.os == 'Linux'
+
+      - name: Disable default go problem matcher
+        run: echo "::remove-matcher owner=go::"
+
+      - name: Check out code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: check if PULL_SECRET exists
+        env:
+          super_secret: ${{ secrets.PULL_SECRET }}
+        if: ${{ env.super_secret == '' }}
+        run: 'echo the secret \"PULL_SECRET\" has not been made; echo please go to \"settings \> secrets \> actions\" to create it'
+
+      - name: Write the pull secret to json file
+        run: |
+          echo $PULL_SECRET > temp-ps.json
+          cat temp-ps.json
+        env:
+          PULL_SECRET: ${{ secrets.PULL_SECRET }}
+        shell: bash
+
+      - name: Download OC openshift client and install
+        run: |
+          curl -L https://mirror.openshift.com/pub/openshift-v4/clients/ocp/4.15.9/openshift-client-linux-4.15.9.tar.gz -o openshift-client-linux.tar.gz
+          tar -zxvf openshift-client-linux.tar.gz
+          sudo mv oc /usr/local/bin
+          sudo mv kubectl /usr/local/bin
+          oc version || true
+          kubectl version || true
+        shell: bash
+
+      - name: Download OCP release and extract
+        run: |
+          oc adm release extract --tools quay.io/openshift-release-dev/ocp-release:4.15.9-x86_64 --registry-config temp-ps.json
+          ls -alsh
+          tar -zxvf openshift-install-linux-4.15.9.tar.gz
+        shell: bash
+
+      - name: Create agent-config and install-config files for agent based installer
+        run: |
+          mkdir -p config
+          pushd config
+          cat << EOF > install-config.yaml
+          apiVersion: v1
+          baseDomain: example.lab
+          compute:
+          - name: worker
+            replicas: 0
+          controlPlane:
+            name: master
+            replicas: 1
+          metadata:
+            name: snovm
+          networking:
+            clusterNetwork:
+            - cidr: 10.128.0.0/14
+              hostPrefix: 23
+            machineNetwork:
+            - cidr: 192.168.122.0/24
+            networkType: OVNKubernetes
+            serviceNetwork:
+            - 172.30.0.0/16
+          platform:
+            none: {}
+          fips: false
+          pullSecret: '${{ secrets.PULL_SECRET }}'
+          sshKey: |
+            ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDfo9QM5zLeAYmsPghS+ysDmtE5yu4AWBWc+ioeZ2oSY0FMlgk4sg0KOZZo6tw1w8RBr0rf+l3I590M/HuX4vwo8Vyw0BvJhFAJ6xOkMQKsC959ql0y0hS8HNa9SKzRCDt3ZouOdBTI4b+J2lOJtPOMieKvJCNZB19hE6kYev8W19hc+y6JiPJHOiDGhKxuX+pXqZAFOxS73Tn6ZggZNKJhDzWub48doYxwKQq5vBWjdAEi5Q2hMsbkWvTVgpGBbSW7CvPqmnuSGCs2um0/WOnW6OoWZ7O3MBlDyhFh3AsN/drlrPW4G7QP98jYi5CTl6AjBy2PO2n5MQjFahrGJX5z9r4cJ051evh3n7OiAXdkon7yf/B3UfHyo/g9KE1ygYj4AXnvwWrtUBPzObOYfCoKgXpUIYl4DhgzBFAJeXacFhKPvv3LaylI/5A6RiDfnsZkKfgV855qam5AX5EnjToprlxMBjGlV0R+AiJyeoaEDgLPD7F+nmUkyfAYJXpuQPs=
+          EOF
+          echo "apiVersion: v1alpha1
+          kind: AgentConfig
+          metadata:
+            name: snovm
+          rendezvousIP: 192.168.122.10
+          hosts:
+            - hostname: master-0
+              interfaces:
+                - name: enp1s0
+                  macAddress: 00:ef:44:21:e6:a5
+              networkConfig:
+                interfaces:
+                  - name: enp1s0
+                    type: ethernet
+                    state: up
+                    mac-address: 00:ef:44:21:e6:a5
+                    ipv4:
+                      enabled: true
+                      address:
+                        - ip: 192.168.122.10
+                          prefix-length: 24
+                      dhcp: false
+                dns-resolver:
+                  config:
+                    server:
+                      - 192.168.122.1
+                      - 1.1.1.1
+                routes:
+                  config:
+                    - destination: 0.0.0.0/0
+                      next-hop-address: 192.168.122.1
+                      next-hop-interface: enp1s0
+                      table-id: 254
+          " > agent-config.yaml
+          popd
+        shell: bash
+
+      - name: Show files
+        run: |
+          ls -alsh config
+          echo "==================== Install Config ===================="
+          cat config/install-config.yaml
+          echo "==================== Agent Config   ===================="
+          cat config/agent-config.yaml
+        shell: bash
+
+      - name: Install deps for agent based generation and kcli
+        run: |
+          sudo apt-get install -y python3-pip python3-cairo-dev libvirt-dev python3-libvirt
+          sudo pip3 install --upgrade nmstate
+          sudo pip3 install --upgrade kcli
+        shell: bash
+
+      - name: Generate agent based install ISO
+        run: |
+          #./openshift-install agent create image --log-level debug --dir config
+          curl -L http://54.218.75.131/agent.x86_64.iso -o config/agent.x86_64.iso
+          mkdir config/auth
+          curl -L http://54.218.75.131/auth/kubeconfig -o config/auth/kubeconfig
+          curl -L http://54.218.75.131/auth/kubeadmin-password -o config/auth/kubeadmin-password
+          curl -L http://54.218.75.131/rendezvousIP -o config/rendezvousIP
+          sudo cp config/agent.x86_64.iso /var/lib/libvirt/images/agent.x86_64.iso
+          #sudo chown qemu: /var/lib/libvirt/images/agent.x86_64.iso
+          sudo chmod a+rwx /var/lib/libvirt/images/agent.x86_64.iso
+          sudo virsh net-list || true
+          kcli list network || true
+          sudo kcli list network || true
+          sudo kcli lit pool || true
+          sudo systemctl status libvirtd || true
+          sudo kcli create pool -t dir -p /var/lib/libvirt/images default
+        shell: bash
+
+      - name: Run SNO VM
+        run: |
+          sudo kcli create vm  -P  \
+          nets=['{"name":"default","ip":"192.168.122.10","netmask":"24","gateway":"192.168.122.1","mac":"00:ef:44:21:e6:a5"}'] \
+          -P iso=/var/lib/libvirt/images/agent.x86_64.iso \
+          -P memory=16384  -P numcpus=8 -P disks=['100'] snovm
+        shell: bash
+
+      - name: Add hostname and IP to /etc/hosts
+        run: |
+          echo "192.168.122.10 api.snovm.example.lab console-openshift-console.apps.snovm.example.lab oauth-openshift.apps.snovm.example.lab prometheus-k8s-openshift-monitoring.apps.snovm.example.lab" | sudo tee -a /etc/hosts
+
+      - name: Start tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          session-name: "mytest"
+
+      - name: Wait for VM to install
+        run: |
+          ./openshift-install agent wait-for install-complete --log-level debug --dir config || true
+        shell: bash
+
+      - name: Set the adm policy
+        run: |
+          oc adm policy add-scc-to-user privileged user
+
+      - name: Run oc version
+        run: |
+          oc version
+          oc get nodes
+          oc get pods -A

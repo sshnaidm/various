@@ -10,6 +10,6 @@ jobs:
       pull-requests: write
     steps:
       - uses: actions/checkout@v4
-      - uses: sshnaidm/wca-code-review-action@v1
+      - uses: sshnaidm/wca-code-review-action@v2
         with:
           wca-key: ${{ secrets.IAM_APIKEY }}

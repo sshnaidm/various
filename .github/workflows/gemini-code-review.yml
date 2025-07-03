@@ -1,0 +1,24 @@
+name: Watson Code Review
+
+on: [pull_request]
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: sshnaidm/gemini-code-review-action@v1
+        with:
+          gemini-key: ${{ secrets.GEMINI_API_KEY }}
+          thinking: dynamic
+          prompt: |
+            You are an expert code reviewer examining the following code. Your job is to catch any bugs or issues *before human review*.
+            1. **Summary:** Briefly summarize the changes or functionality of the code.
+            2. **Issues:** Identify any bugs, logic errors, edge cases, or missing error handling. Point out security vulnerabilities
+            (e.g. missing input validation, unsafe operations). Flag performance or efficiency problems (e.g. slow algorithms, heavy operations).
+            3. **Recommendations:** For each issue, suggest a concrete fix or improvement. Provide clear reasoning.
+            4. **Code Quality:** Assess the code quality, including readability, maintainability, and adherence to best practices.
+            Ignore minor style or naming issues unless they severely impact correctness. Focus only on substantive code problems.

@@ -19,6 +19,8 @@ jobs:
             1. **Summary:** Briefly summarize the changes or functionality of the code.
             2. **Issues:** Identify any bugs, logic errors, edge cases, or missing error handling. Point out security vulnerabilities
             (e.g. missing input validation, unsafe operations). Flag performance or efficiency problems (e.g. slow algorithms, heavy operations).
+            Suggest code changes in Markdown format, using `diff` syntax for clarity.
             3. **Recommendations:** For each issue, suggest a concrete fix or improvement. Provide clear reasoning.
             4. **Code Quality:** Assess the code quality, including readability, maintainability, and adherence to best practices.
             Ignore minor style or naming issues unless they severely impact correctness. Focus only on substantive code problems.
+            5. Write your response in Markdown format, using headings and bullet points for clarity.

@@ -1,4 +1,4 @@
-name: Watson Code Review
+name: Gemini Code Review
 
 on: [pull_request]
 
